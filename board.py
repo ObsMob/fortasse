@@ -3,6 +3,7 @@ import math
 from config import Tile_Shape, BOARD_DEPTH
 from mines import MineField
 from tile import Tile
+from render import RenderCLI
 
 class Board():
     def __init__(self, tile_shape_value, board_depth=BOARD_DEPTH):
@@ -10,6 +11,7 @@ class Board():
         self.depth = board_depth
         self.mine_field = MineField(self)
         self.tile_quantity = self.get_max_tiles()
+        self.board_render = RenderCLI(board)
         try:
             self.tile_shape = Tile_Shape(tile_shape_value)
         except ValueError:
@@ -18,6 +20,7 @@ class Board():
         for i in range(1, self.tile_quantity + 1):
             self.tiles[i] = Tile(i, self)
 
+        self.assign_state_coords()
         self.mine_field.place_mines()
 
         tile_mapping = {i: set() for i in range(1, self.tile_quantity + 1)}
@@ -139,3 +142,10 @@ class Board():
                     for coord in neighbors_get(index_to_coord[i]):
                         if coord in coord_to_index:
                             tile_mapping[i].add(coord_to_index[coord])
+
+    def assign_state_coords(self):
+        tile_index = 1
+        for r in range(1, self.depth + 1):
+            for c in range(1, self.depth + 1):
+                self.tiles.[tile_index].state_coords = (r, c)
+                tile_index += 1

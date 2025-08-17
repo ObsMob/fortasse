@@ -5,8 +5,11 @@ class Tile():
         self.neighbors = []
         self.is_mine = False
         self.adjacent_mines = 0
+        self.adjacent_flags = 0
         self.is_revealed = False
-        self.is_marked = False
+        self.is_flagged = False
+        self.state_coords = None
+        self.game_loss_symbol = None
 
     def update_adjacent_mines(self): 
         count = 0
@@ -17,19 +20,28 @@ class Tile():
         
         self.adjacent_mines = count
 
+    def update_adjacent_flags(self):
+        count = 0
+        
+        for neighbor in self.neighbors:
+            if neighbor.is_flagged:
+                count += 1
+        
+        self.adjacent_flags = count
+
     def reveal_tile(self, loss=False):
         if loss == False:
             
             if self.is_revealed:
-                print(f'Error: Tile {self.index} is already revealed.\n')
+                print(f'Error: Tile {self.index} at {self.state_coords} is already revealed.\n')
                 return
 
-            elif self.is_marked:
-                print(f'Error: Tile {self.index} is marked. To reveal, first unmark Tile {self.index}.\n')
+            elif self.is_flagged:
+                print(f'Error: Tile {self.index} at {self.state_coords} is flagged. To reveal, first unflag Tile.\n')
                 return
 
             elif self.is_mine:
-                #replace tile display with explosion
+                self.is_revealed = True
                 return game_over(self.board)
 
             else:
@@ -43,19 +55,25 @@ class Tile():
                         neighbor.reveal_tile()
         
         else: 
-            if self.is_mine and self.is_marked:
-                #replace mark with green check
-            elif self.is_mine and not self.is_marked:
-                #replace display with bomb
-            elif not self.is_mine and self.is_marked:
-                #replace with red x
+            if self.is_mine and self.is_flagged:
+                self.game_loss_symbol = "CORRECT"
+            elif self.is_mine and not self.is_flagged:
+                self.game_loss_symbol = "MISSED"
+            elif not self.is_mine and self.is_flagged:
+                self.game_loss_symbol = "INCORRECT"
         
-    def mark_tile(self):
-        if self.is_marked == True:
-            self.is_marked = False
-            self.board.mine_field.update_remaining_mines(+1)
-            print(f'\nTile{self.index} has been unmarked.')
+    def flag_tile(self):
+        mine_field = self.board.mine_field
+
+        if self.is_flagged == True:
+            self.is_flagged = False
+            mine_field.update_remaining_mines(+1)
+            print(f'\nTile {self.index} at {self.state_coords} has been unflagged.')
+        
         else:
-            self.is_marked = True
-            self.board.mine_field.update_remaining_mines(-1)
-            print(f'\nTile{self.index} has been marked.')
+            self.is_flagged = True
+            mine_field.update_remaining_mines(-1)
+            print(f'\nTile {self.index} at {self.state_coords} has been flagged.')
+        
+        for neighbor in self.neighbors:
+            neighbor.update_adjacent_flags()
