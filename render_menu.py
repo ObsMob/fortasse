@@ -17,6 +17,7 @@ class RenderMenuCLI():
         parameters_header = "Current Parameters"
         options_header = "Input Options. Press:"
         prompt_lock = '(Currently locked. Soon™)'
+        
         parameters =[
             f'Board Size = {BOARD_DEPTH}',                          # ANSI(8, 14) r, c (including outline)
             f'Tile Shape = {TILE_SHAPE.value} {prompt_lock}',       # ANSI(9, 14)

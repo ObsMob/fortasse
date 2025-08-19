@@ -235,9 +235,9 @@ def game_over(board):
         user_input = input("Select option:").strip().upper()
 
         if user_input == "Q":
-            return quit_game()
+            return 
         elif user_input == "M":
-            return menu_load()
+            return 
         elif user_input == "R":
             return start_game(same_game=True)
         else:
@@ -284,15 +284,35 @@ def start_game(same_game=False):
 def main():
     handle_first_load()
     
-    saved_mines_list = []
+    saved_mines = None
     game_running = True
 
     while game_running:
         menu_action = menu_load()
 
-        if menu_action == True:
-            game_result = start_game()
-        elif game_start == False:
+        if menu_action == MenuAction.START:
+            game_result, saved_mines = start_game(saved_mines)
+
+            if game_result == GameResult.QUIT:
+                break    
+            else:
+                if game_result == GameResult.WON:
+                    game_action = game_won()
+                elif game_result == GameResult.LOSS:
+                    game_action= game_over()
+                else:
+                    game_action = GameAction.MENU
+                
+                if game_action == GameAction.RESTART:
+                    game_result, saved_mines = start_game(saved_mines)
+                    continue
+                elif game_action == GameAction.MENU:
+                    saved_mines = None
+                    break
+                elif game_action == GameAction.QUIT:
+                    game_running = False
+
+        elif menu_action == MenuAction.QUIT:
             game_running = False
 
 quit_game()

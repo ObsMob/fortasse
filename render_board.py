@@ -143,3 +143,6 @@ class RenderBoardCLI():
                 return Symbol_Icon.EMPTY
             else:
                 return self.compose_fullwidth_digit(r / 2)
+
+    def update_print_remaining_mines(self):
+

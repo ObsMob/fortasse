@@ -58,3 +58,17 @@ class Menu(Enum):
     TILE =  "Tile Menu"
     CORNERS = "Corner Menu"
     RES = "Resolution Menu"
+
+class MenuAction(Enum):
+    START = auto()
+    QUIT = auto()
+
+class GameResult(Enum):
+    WON = auto()
+    LOSS = auto()
+    QUIT = auto()
+
+class GameAction(Enum):
+    RESTART = auto()
+    MENU = auto()
+    QUIT = auto()
