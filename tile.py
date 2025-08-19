@@ -1,3 +1,4 @@
+
 class Tile():
     def __init__(self, index, board):
         self.board = board

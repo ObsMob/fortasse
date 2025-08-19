@@ -1,8 +1,10 @@
+import sys
 
-from config import Symbol_Icon, Text_Color
 from board import Board
+from config import Symbol_Icon, Text_Color
 
-class RenderCLI():
+
+class RenderBoardCLI():
     def __init__(self, board):
         self.board = board
         self.total_cli_depth = board.depth * 2 + 1
@@ -14,27 +16,28 @@ class RenderCLI():
             self.update_tile_symbol(tile)
 
     def update_tile_symbol(self, tile):
-        cli_row, cli_column = self.state_to_cli(tile.state_coords)
-        #mutate symbol in cli_grid on call
-        #call helpers for symbols
+        cli_row, cli_column = self.state_to_cli_index(tile.state_coords) 
+        
+        self.cli_grid[cli_row][cli_column] = self.get_tile_symbol(tile)
+        self.render_tile(tile.state_coords)
 
     def state_to_cli_index(self, coords):
         r, c  = coords
         return (r * 2 - 1, c * 2 - 1)
 
-    def get_tile_symbol(self, tile):
-        if not tile.is_revealed:
-            if tile.is_flagged:
-                return Symbol_Icon.FLAG.value
-            else:
-                return Symbol_Icon.UNKNOWN.value
-        
+    def get_tile_symbol(self, tile):        
         if tile.game_loss_symbol == "CORRECT":
             return Symbol_Icon.CORRECT.value
         elif tile.game_loss_symbol == "MISSED":
             return Symbol_Icon.BOMB.value
         elif tile.game_loss_symbol == "INCORRECT":
             return Symbol_Icon.INCORRECT.value
+        
+        if not tile.is_revealed:
+            if tile.is_flagged:
+                return Symbol_Icon.FLAG.value
+            else:
+                return Symbol_Icon.UNKNOWN.value
 
         if tile.is_mine:
             return Symbol_Icon.EXPLODE.value
@@ -81,39 +84,44 @@ class RenderCLI():
     def cli_outline_render(self, r, c):
         if r == 1:
             if c == 1: 
-                return "╔"
+                return Symbol_Icon.TOPLEFT
             elif c == self.total_cli_depth: 
-                return "╗"
+                return Symbol_Icon.TOPRIGHT
             elif c % 2 == 0: 
-                return "═"
+                return Symbol_Icon.HORIZ
             else:
-                return "╦"
+                return Symbol_Icon.TOPTEE
         
         elif r == self.total_cli_depth:
             if c == 1:
-                return "╚"
+                return Symbol_Icon.BOTLEFT
             elif c == self.total_cli_depth:
-                return "╝"              
+                return Symbol_Icon.BOTRIGHT              
             elif c % 2 == 0:
-                return "═"
+                return Symbol_Icon.HORIZ
             else:
-                return "╩"
+                return Symbol_Icon.BOTTEE
 
         elif r % 2 == 0:
             if c % 2 == 1:
-                return "║"
+                return Symbol_Icon.VERT
             else:
-                return "  "
+                return Symbol_Icon.EMPTY
 
         else:
             if c == 1:
-                return "╠"
+                return Symbol_Icon.LEFTTEE
             elif c == self.total_cli_depth:
-                return "╣"
+                return Symbol_Icon.RIGHTTEE
             elif c % 2 == 0:
-                return "═"
+                return Symbol_Icon.HORIZ
             else:
-                return "╬"                   
+                return Symbol_Icon.TEE                   
 
+    def render_tile(self, coords):
+        cli_row, cli_column = state_to_cli_index(coords)
+        symbol = self.cli_grid[cli_row][cli_column]
+        ANSI_row = coords[0] * 3 - 1
+        ANSI_column = coords[1] * 3 - 1
 
-
+        print(f'\033[{ANSI_row};{ANSI_column}H{symbol}', end="", flush=True)
