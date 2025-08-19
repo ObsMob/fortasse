@@ -34,16 +34,19 @@ class Tile():
         if loss == False:
             
             if self.is_revealed:
-                print(f'Error: Tile {self.index} at {self.state_coords} is already revealed.\n')
+                ANSI_row = self.board.depth * 2 + 5
+                error = f'Error: Tile {self.index} at {self.state_coords} is already revealed.\n'
+                print()
                 return
 
             elif self.is_flagged:
-                print(f'Error: Tile {self.index} at {self.state_coords} is flagged. To reveal, first unflag Tile.\n')
+                ANSI_row = self.board.depth * 2 + 5
+                error = f'Error: Tile {self.index} at {self.state_coords} is flagged. To reveal, first unflag Tile.\n'
+                print()
                 return
 
             elif self.is_mine:
                 self.is_revealed = True
-                return game_over(self.board)
 
             else:
                 self.is_revealed = True
@@ -69,12 +72,9 @@ class Tile():
         if self.is_flagged == True:
             self.is_flagged = False
             mine_field.update_remaining_mines(+1)
-            print(f'\nTile {self.index} at {self.state_coords} has been unflagged.')
-        
         else:
             self.is_flagged = True
             mine_field.update_remaining_mines(-1)
-            print(f'\nTile {self.index} at {self.state_coords} has been flagged.')
         
         for neighbor in self.neighbors:
             neighbor.update_adjacent_flags()

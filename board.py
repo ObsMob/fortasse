@@ -1,24 +1,18 @@
 import math
 
-from config import Tile_Shape, BOARD_DEPTH
+from config import BOARD_DEPTH, TILE_SHAPE
 from mines import MineField
 from tile import Tile
-from render_board import RenderBoardCLI
 
 
 class Board():
-    def __init__(self, tile_shape, board_depth=BOARD_DEPTH):
+    def __init__(self):
         self.tiles = {}
-        self.depth = board_depth
-        self.mine_field = MineField(self)
+        self.depth = BOARD_DEPTH
+        self.tile_shape = TILE_SHAPE
         self.tile_quantity = self.get_max_tiles()
-        try:
-            self.tile_shape = Tile_Shape(tile_shape)
-        except ValueError:
-            print(f'{tile_shape_value} is not a supported tile shape.\nExpected Shapes: "3, 4, or 6"')
-
-        self.populate_tiles_data()
-        self.board_render = RenderBoardCLI(board)
+        self.mine_field = None # Minefield(board)
+        self.board_render = None # RenderBoardCLI(board)
 
     def populate_tiles_data(self):
         for i in range(1, self.tile_quantity + 1):
@@ -35,21 +29,19 @@ class Board():
         for i, neighbors in tile_mapping.items():
             for neighbor in neighbors:
                 self.tiles[i].neighbors.append(self.tiles[neighbor])
-        
+
+        self.mine_field.set_tile_mine_attr()
+
         for tile in self.tiles.values():
             tile.update_adjacent_mines()
-
-        self.mine_field.place_mines()
-
+        
     def get_max_tiles(self):
         match self.tile_shape:
             
             case Tile_Shape.TRI:
-                return self.depth ** 2
-            
+                return self.depth ** 2 
             case Tile_Shape.SQ:
                 return self.depth ** 2
-
             case Tile_Shape.HEX:
                 return 3 * self.depth * (self.depth - 1) + 1
 

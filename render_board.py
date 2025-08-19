@@ -23,7 +23,7 @@ class RenderBoardCLI():
 
     def state_to_cli_index(self, coords):
         r, c  = coords
-        return (r * 2 - 1, c * 2 - 1)
+        return (r * 2, c * 2)
 
     def get_tile_symbol(self, tile):        
         if tile.game_loss_symbol == "CORRECT":
@@ -66,22 +66,25 @@ class RenderBoardCLI():
         else:
             return Text_Color.RED.value
 
-    def compose_fullwidth_digit(self, mine_count):
-        if mine_count <= 9:
-            return Symbol_Icon.DIGITS.value[mine_count]
+    def compose_fullwidth_digit(self, digit):
+        if digit <= 9:
+            return Symbol_Icon.DIGITS.value[digit]
         else:
-            return "".join(Symbol_Icon.DIGITS.value[int(d)] for d in str(mine_count)) # Parses the digits of a number and combines separate fullwidth versions??
+            return "".join(Symbol_Icon.DIGITS.value[int(d)] for d in str(digit)) # Parses the digits of a number and combines separate fullwidth versions??
 
     def populate_cli_grid(self):
-        for r in range(1, self.total_cli_depth + 1):
+        for r in range(self.total_cli_depth + 1):
             row = [] 
             
-            for c in range(1, self.total_cli_depth + 1):
-                row.append(self.cli_outline_render(r, c))
+            for c in range(self.total_cli_depth + 1):
+                row.append(self.cli_outline_get_symbol(r, c))
             
             self.cli_grid.append(row)
 
-    def cli_outline_render(self, r, c):
+    def cli_outline_get_symbol(self, r, c):
+        if r == 0 or c == 0:
+            return self.cli_outline_tile_index(r, c)
+
         if r == 1:
             if c == 1: 
                 return Symbol_Icon.TOPLEFT
@@ -121,7 +124,22 @@ class RenderBoardCLI():
     def render_tile(self, coords):
         cli_row, cli_column = state_to_cli_index(coords)
         symbol = self.cli_grid[cli_row][cli_column]
-        ANSI_row = coords[0] * 3 - 1
-        ANSI_column = coords[1] * 3 - 1
+        ANSI_row = coords[0] * 3 + 1
+        ANSI_column = coords[1] * 2 + 1 
 
         print(f'\033[{ANSI_row};{ANSI_column}H{symbol}', end="", flush=True)
+
+    def cli_outline_tile_index(self, r, c):
+        if r == 0:
+            if c == 0:
+                return Symbol_Icon.EMPTY
+            elif c % 2 == 1:
+                return " "
+            else:
+                return self.compose_fullwidth_digit(c / 2)
+        
+        else:
+            if r % 2 == 1:
+                return Symbol_Icon.EMPTY
+            else:
+                return self.compose_fullwidth_digit(r / 2)
