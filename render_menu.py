@@ -1,4 +1,4 @@
-from cursor import print_w_flush, print_wo_newline
+from cursor import print_w_flush, print_wo_newline, move_cursor
 from config import (
     BOARD_DEPTH,
     TILE_SHAPE,
@@ -6,25 +6,34 @@ from config import (
     RESOLUTION,
     Resolutions,
     Menu,
+    Symbol_Icon,
 )
 
 class RenderMenuCLI():
     def __init__(self):
         self.options_menu = Menu.MAIN 
         self.width = 50
-        
-        greeting = "Welcome to Bomb-Boinger!"
-        parameters_header = "Current Parameters"
-        options_header = "Input Options. Press:"
-        prompt_lock = '(Currently locked. Soon™)'
+        self.greeting = "Welcome to Bomb-Boinger!"
+        self.parameters_header = "Current Parameters"
+        self.options_header = "Input Options. Press:"
+        self.prompt_lock = '(Currently locked. Soon™)'
 
-        parameters =[
+        self.populate_parameters()
+        self.populate_options_sections()
+
+        self.max_options_rows = max(len(options_list) for options_list in self.options_sections.values())
+
+
+    def populate_parameters(self):
+        self.parameters =[
             f'Board Size = {BOARD_DEPTH}',                          # ANSI(8, 14) r, c (including outline)
-            f'Tile Shape = {TILE_SHAPE.value} {prompt_lock}',       # ANSI(9, 14)
-            f'Corners Touch = {CORNERS} {prompt_lock}',             # ANSI(10, 17)
+            f'Tile Shape = {TILE_SHAPE.value} {self.prompt_lock}',       # ANSI(9, 14)
+            f'Corners Touch = {CORNERS} {self.prompt_lock}',             # ANSI(10, 17)
             f'Current Resolution = {RESOLUTION.value}'              # ANSI(11, 22)
         ]
-        options_sections = {
+
+    def populate_options_sections(self):
+        self.options_sections = {
             "main_options": [
                 '"S" = Start Game',                     # ANSI(16, 2) r, c (including outline)                     
                 '"E" = Edit Parameters',                # ANSI(17, 2)
@@ -59,20 +68,9 @@ class RenderMenuCLI():
                 '"B" = Back to Edit Menu'               # ANSI(19, 2)
             ]
         }
-        max_options_rows = max(len(options_list) for options_list in options_sections.values())
 
-    def draw_menu(self):
-        header_text = ""
-        option_text = ""
-
-        top = f'{Symbol_Icon.TOPLEFT}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.TOPRIGHT}'
-        bottom = f'{Symbol_Icon.BOTLEFT}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.BOTRIGHT}'
-        divider = f'{Symbol_Icon.LEFTTEE}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.RIGHTTEE}'
-        header = f'{Symbol_Icon.VERT}{header_text:^{self.width}}{Symbol_Icon.VERT}'
-        option = f'{Symbol_Icon.VERT}{option_text}{Symbol_Icon.EMPTY * (self.width - len(option_text))}{Symbol_Icon.VERT}'
-        empty_row = f'{Symbol_Icon.VERT}{Symbol_Icon.EMPTY * self.width}{Symbol_Icon.VERT}'
-
-        match RESOLUTION:
+    def update_width_references(self):
+            match RESOLUTION:
             # case Resolutions.RES_480:
             #     self.width = round(self.width * .48)
             # case Resolutions.RES_720:
@@ -85,87 +83,43 @@ class RenderMenuCLI():
                 self.width = round(self.width * 1.33)
             case Resolutions.RES_4K:
                 self.width = round(self.width * 2)
+            
+            self.populate_parameters()
+            self.populate_options_sections()
+            self.max_options_rows = max(len(options_list) for options_list in self.options_sections.values())
+
+    def draw_menu(self):
+
+        self.update_width_references()
+        self.draw_greeting_section()
+        self.draw_parameter_section()
+        self.draw_option_section()
         
-        def greeting_section():
-            header_text = greeting
-            
-            print_w_flush(top)
-            print_w_flush(empty_row)
-            print_w_flush(header)
-            print_w_flush(empty_row)
-            print_w_flush(divider) 
-            # Row 5
+    def draw_greeting_section(self):
+        header_text = self.greeting
+        
+        self.top_row()
+        self.empty_row()
+        self.header_row(header_text)
+        self.empty_row()
+        self.divider_row()
+        # Row 5
 
-        def parameter_section():
-            header_text = parameters_header
+    def draw_parameter_section(self):
+        header_text = self.parameters_header
 
-            print_w_flush(header)
-            print_w_flush(empty_row)
-            
-            for i in range(len(parameters)):
-                option_text = parameters[i]
-                print_w_flush(option)
+        self.header_row(header_text)
+        self.empty_row()
 
-            print_w_flush(empty_row)
-            print_w_flush(divider)
-            # Row 13
+        for param in self.parameters:
+            self.option_row(param)
 
-        def initial_options_section():
-            header_text = options_header
-            filler_rows = max_options_rows - len(options_sections[main_options])
-            
-            print_w_flush(header)
-            print_w_flush(empty_row)
-            # Row 15
-            
-            for option_value in options_sections[main_options]:
-                option_text = option_value
-                print_w_flush(option_text)
-            for i in range(filler_lines):
-                print_w_flush(empty_row)
+        self.empty_row()
+        self.divider_row()
+        # Row 13
 
-            print_w_flush(empty_row)
-            print_w_flush(bottom)
-            # Row 22
-
-        greeting_section()
-        parameter_section()
-        initial_options_section()
-
-    def draw_new_parameter(self):
-        ANSI_row = 0
-        ANSI_column = 0
-        updated_text = ""
-        ANSI_update = f'\033[{ANSI_row};{ANSI_column}H{updated_text:<{self.width - ANSI_column}}'
-
-        match self.options_menu:
-            case Menu.DEPTH:
-                ANSI_row = 8
-                ANSI_column = 14
-                updated_text = BOARD_DEPTH
-                return print_wo_newline(ANSI_update)
-            case Menu.TILE:
-                ANSI_row = 9
-                ANSI_column = 14
-                updated_text = TILE_SHAPE.value
-                return print_wo_newline(ANSI_update)
-            case Menu.CORNERS:
-                ANSI_row = 10
-                ANSI_column = 17
-                updated_text = CORNERS
-                return print_wo_newline(ANSI_update)
-            case Menu.RES:
-                ANSI_row = 11
-                ANSI_column = 22
-                updated_text = RESOLUTION.value
-                return print_wo_newline(ANSI_update)
-
-    def draw_new_option_menu(self):
-        ANSI_row = 16
-        ANSI_column = 2
-        updated_text = ""
-        ANSI_update = f'\033[{ANSI_row};{ANSI_column}H{updated_text}:<{self.width}'
-        filler_rows = max_options_rows - len(options_sections[option_section])
+    def draw_option_section(self, row=14):
+        header_text = self.options_header
 
         match self.options_menu:
             case Menu.MAIN:
@@ -180,12 +134,54 @@ class RenderMenuCLI():
                 option_section = "corner_prompt"
             case Menu.RES:
                 option_section = "resolution_prompt"
+
+        filler_rows = self.max_options_rows - len(self.options_sections[option_section])
         
-        for option in options_sections[option_section]:
-            updated_text = option
-            print_wo_newline(ANSI_update)
-            ANSI_row += 1
-        for row in filler_rows:
-            updated_text = f'{Symbol_Icon.EMPTY * self.width}'
-            print_wo_newline(ANSI_update)
-            ANSI_row += 1
+        move_cursor(row)
+        self.header_row(header_text)
+        self.empty_row()
+        # Row 15
+        for option_text in self.options_sections[option_section]:
+            self.option_row(option_text)
+
+        for r in range(filler_rows):
+            self.empty_row()
+
+        self.empty_row()
+        self.bot_row()
+        # Row 22
+
+    def draw_new_parameter(self):
+
+        match self.options_menu:
+            case Menu.DEPTH:
+                row, col, updated_text = 8, 14, BOARD_DEPTH
+            case Menu.TILE:
+                row, col, updated_text = 9, 14, TILE_SHAPE.value
+            case Menu.CORNERS:
+                row, col, updated_text = 10, 17, CORNERS
+            case Menu.RES:
+                row, col, updated_text = 11, 22, RESOLUTION.value
+
+        return self.update_text(row, col, updated_text)
+
+    def top_row(self):
+        return print_w_flush(f'{Symbol_Icon.TOPLEFT}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.TOPRIGHT}')
+
+    def bot_row(self):
+        return print_w_flush(f'{Symbol_Icon.BOTLEFT}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.BOTRIGHT}')
+    
+    def divider_row(self):
+        return print_w_flush(f'{Symbol_Icon.LEFTTEE}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.RIGHTTEE}')
+    
+    def option_row(self, option_text):
+        return print_w_flush(f'{Symbol_Icon.VERT}{option_text:<{self.width}}{Symbol_Icon.VERT}')
+
+    def empty_row(self):
+        return print_w_flush(f'{Symbol_Icon.VERT}{" " * self.width}{Symbol_Icon.VERT}')
+
+    def header_row(self, header_text):
+        return print_w_flush(f'{Symbol_Icon.VERT}{header_text:^{self.width}}{Symbol_Icon.VERT}')
+
+    def update_text(self, row, col, updated_text):
+        return print_wo_newline(f'\033[{row};{col}H{updated_text:<{self.width - col}}')
