@@ -1,3 +1,6 @@
+import random
+import math
+
 from board import Board
 
 

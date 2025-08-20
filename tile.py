@@ -1,3 +1,4 @@
+from config import RevealType
 
 class Tile():
     def __init__(self, index, board):
@@ -34,30 +35,15 @@ class Tile():
         if loss == False:
             
             if self.is_revealed:
-                ANSI_row = self.board.depth * 2 + 5
-                error = f'Error: Tile {self.index} at {self.state_coords} is already revealed.\n'
-                print()
-                return
-
+                return RevealType.ISREVEALED
             elif self.is_flagged:
-                ANSI_row = self.board.depth * 2 + 5
-                error = f'Error: Tile {self.index} at {self.state_coords} is flagged. To reveal, first unflag Tile.\n'
-                print()
-                return
-
+                return RevealType.ISFLAGGED
             elif self.is_mine:
                 self.is_revealed = True
-
+                return RevealType.ISMINE
             else:
                 self.is_revealed = True
 
-                for neighbor in self.neighbors:
-                    if (
-                        neighbor.is_revealed == False and 
-                        neighbor.adjacent_mines == 0
-                    ):
-                        neighbor.reveal_tile()
-        
         else: 
             if self.is_mine and self.is_flagged:
                 self.game_loss_symbol = "CORRECT"
@@ -65,11 +51,13 @@ class Tile():
                 self.game_loss_symbol = "MISSED"
             elif not self.is_mine and self.is_flagged:
                 self.game_loss_symbol = "INCORRECT"
-        
+
     def flag_tile(self):
         mine_field = self.board.mine_field
+        if self.is_revealed:
+            return RevealType.ISREVEALED
 
-        if self.is_flagged == True:
+        elif self.is_flagged == True:
             self.is_flagged = False
             mine_field.update_remaining_mines(+1)
         else:

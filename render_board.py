@@ -2,13 +2,13 @@ import sys
 
 from board import Board
 from config import Symbol_Icon, Text_Color
+from cursor import print_wo_newline
 
 
 class RenderBoardCLI():
     def __init__(self, board):
         self.board = board
         self.total_cli_depth = board.depth * 2 + 1
-        self.total_state_depth = board.depth
         self.cli_grid = []
 
         self.populate_cli_grid()
@@ -19,12 +19,11 @@ class RenderBoardCLI():
         cli_row, cli_column = self.state_to_cli_index(tile.state_coords) 
         
         self.cli_grid[cli_row][cli_column] = self.get_tile_symbol(tile)
-        self.render_tile(tile.state_coords)
 
     def state_to_cli_index(self, coords):
         r, c  = coords
         return (r * 2, c * 2)
-
+    
     def get_tile_symbol(self, tile):        
         if tile.game_loss_symbol == "CORRECT":
             return Symbol_Icon.CORRECT.value
@@ -83,7 +82,7 @@ class RenderBoardCLI():
 
     def cli_outline_get_symbol(self, r, c):
         if r == 0 or c == 0:
-            return self.cli_outline_tile_index(r, c)
+            return self.cli_outline_indices(r, c)
 
         if r == 1:
             if c == 1: 
@@ -121,15 +120,7 @@ class RenderBoardCLI():
             else:
                 return Symbol_Icon.TEE                   
 
-    def render_tile(self, coords):
-        cli_row, cli_column = state_to_cli_index(coords)
-        symbol = self.cli_grid[cli_row][cli_column]
-        ANSI_row = coords[0] * 3 + 1
-        ANSI_column = coords[1] * 2 + 1 
-
-        print(f'\033[{ANSI_row};{ANSI_column}H{symbol}', end="", flush=True)
-
-    def cli_outline_tile_index(self, r, c):
+    def cli_outline_indices(self, r, c):
         if r == 0:
             if c == 0:
                 return Symbol_Icon.EMPTY
@@ -144,5 +135,22 @@ class RenderBoardCLI():
             else:
                 return self.compose_fullwidth_digit(r / 2)
 
-    def update_print_remaining_mines(self):
+    def draw_board(self):
+        for row in range(len(self.cli_grid)):
+            for col in range(len(row)):
+                print_wo_newline(self.cli_grid[row][col])
 
+    def draw_remaining_mines(self):
+        ANSI_row = self.total_cli_depth + 2
+        remaining_mines = self.board.mine_field.remaining_mines
+        board_width = board.depth * 3 + 1
+
+        print_wo_newline(f'\033[{ANSI_row};2H{remaining_mines:^{board_width}}')
+
+    def draw_tile(self, tile):
+        cli_row, cli_column = state_to_cli_index(tile.state_coords)
+        symbol = self.cli_grid[cli_row][cli_column]
+        ANSI_row = coords[0] * 3
+        ANSI_column = coords[1] * 2 + 1 
+
+        print_wo_newline(f'\033[{ANSI_row};{ANSI_column}H{symbol}')

@@ -1,15 +1,8 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 FIRST_LOAD = True
-
-BOARD_DEPTH = 3
-TILE_SHAPE = Tile_Shape.SQ
-CORNERS = False
-RESOLUTION = Resolutions.RES_1080
-
 FULLWIDTH_DIGITS = ["０","１","２","３","４","５","６","７","８","９"]
-TILE_WIDTH = 2
 
 class Tile_Shape(Enum):
     TRI = "Triangle"
@@ -42,6 +35,8 @@ class Symbol_Icon(Enum):
     VERT = "║"
     TEE = "╬"
     EMPTY = "  "
+    TACO = "🌮"
+    TROPHY = "🏆"
 
 class Resolutions(Enum):
     # RES_480 = (854, 480)
@@ -68,7 +63,18 @@ class GameResult(Enum):
     LOSS = auto()
     QUIT = auto()
 
-class GameAction(Enum):
+class PostGameAction(Enum):
     RESTART = auto()
     MENU = auto()
     QUIT = auto()
+
+class RevealType(Enum):
+    ISREVEALED = auto()
+    ISFLAGGED = auto()
+    ISMINE = auto()
+
+BOARD_DEPTH = 3
+TILE_SHAPE = Tile_Shape.SQ
+CORNERS = False
+RESOLUTION = Resolutions.RES_1080
+TACOS = 0

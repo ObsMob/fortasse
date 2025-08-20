@@ -1,7 +1,6 @@
 import math
 
 from config import BOARD_DEPTH, TILE_SHAPE
-from mines import MineField
 from tile import Tile
 
 
@@ -15,21 +14,14 @@ class Board():
         self.board_render = None # RenderBoardCLI(board)
 
     def populate_tiles_data(self):
-        for i in range(1, self.tile_quantity + 1):
-            self.tiles[i] = Tile(i, self)
-
-        self.assign_state_coords()
-
         tile_mapping = {}
         for i in range(1, self.tile_quantity + 1):
+            self.tiles[i] = Tile(i, self)
             tile_mapping[i] = set()
-        
-        self.add_edges()
-        
-        for i, neighbors in tile_mapping.items():
-            for neighbor in neighbors:
-                self.tiles[i].neighbors.append(self.tiles[neighbor])
 
+        self.assign_state_coords()
+        self.add_edges()
+        self.map_tile_neighbors(tile_mapping)
         self.mine_field.set_tile_mine_attr()
 
         for tile in self.tiles.values():
@@ -142,10 +134,23 @@ class Board():
                     for coord in neighbors_get(index_to_coord[i]):
                         if coord in coord_to_index:
                             tile_mapping[i].add(coord_to_index[coord])
+    
+    def map_tile_neighbors(self, tile_mapping):
+        for i, neighbors in tile_mapping.items():
+            for neighbor in neighbors:
+                self.tiles[i].neighbors.append(self.tiles[neighbor])
 
     def assign_state_coords(self):
         tile_index = 1
         for r in range(1, self.depth + 1):
             for c in range(1, self.depth + 1):
-                self.tiles.[tile_index].state_coords = (r, c)
+                self.tiles[tile_index].state_coords = (r, c)
                 tile_index += 1
+
+    def get_tile_from_coords(self, coords):
+        row, col = coords
+
+        for tile in self.tiles:
+            if tile.state_coords == (row, col):
+                return tile
+        

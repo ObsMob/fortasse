@@ -12,12 +12,12 @@ class RenderMenuCLI():
     def __init__(self):
         self.options_menu = Menu.MAIN 
         self.width = 50
-
+        
         greeting = "Welcome to Bomb-Boinger!"
         parameters_header = "Current Parameters"
         options_header = "Input Options. Press:"
         prompt_lock = '(Currently locked. Soon™)'
-        
+
         parameters =[
             f'Board Size = {BOARD_DEPTH}',                          # ANSI(8, 14) r, c (including outline)
             f'Tile Shape = {TILE_SHAPE.value} {prompt_lock}',       # ANSI(9, 14)
@@ -59,7 +59,7 @@ class RenderMenuCLI():
                 '"B" = Back to Edit Menu'               # ANSI(19, 2)
             ]
         }
-        max_options_rows = max(len(options_list) for options_list in menu.options_sections.values())
+        max_options_rows = max(len(options_list) for options_list in options_sections.values())
 
     def draw_menu(self):
         header_text = ""
@@ -86,7 +86,7 @@ class RenderMenuCLI():
             case Resolutions.RES_4K:
                 self.width = round(self.width * 2)
         
-        def greeting_section(self):
+        def greeting_section():
             header_text = greeting
             
             print_w_flush(top)
@@ -96,7 +96,7 @@ class RenderMenuCLI():
             print_w_flush(divider) 
             # Row 5
 
-        def parameter_section(self):
+        def parameter_section():
             header_text = parameters_header
 
             print_w_flush(header)
@@ -110,7 +110,7 @@ class RenderMenuCLI():
             print_w_flush(divider)
             # Row 13
 
-        def initial_options_section(self):
+        def initial_options_section():
             header_text = options_header
             filler_rows = max_options_rows - len(options_sections[main_options])
             
@@ -128,15 +128,15 @@ class RenderMenuCLI():
             print_w_flush(bottom)
             # Row 22
 
-        self.draw_menu.greeting_section()
-        self.draw_menu.parameter_section()
-        self.draw_menu.initial_options_section()
+        greeting_section()
+        parameter_section()
+        initial_options_section()
 
     def draw_new_parameter(self):
         ANSI_row = 0
         ANSI_column = 0
         updated_text = ""
-        ANSI_update = f'\033[{ANSI_row};{ANSI_column}H{updated_text}:<{self.width - ANSI_column}'
+        ANSI_update = f'\033[{ANSI_row};{ANSI_column}H{updated_text:<{self.width - ANSI_column}}'
 
         match self.options_menu:
             case Menu.DEPTH:
