@@ -1,20 +1,21 @@
 from enum import Enum, auto
 
 
+FIRST_LOAD = True
 FULLWIDTH_DIGITS = ["０","１","２","３","４","５","６","７","８","９"]
 
-class TileShape(Enum):
+class Tile_Shape(Enum):
     TRI = "Triangle"
     SQ = "Square"
     HEX = "Hexagon"
 
-class TextColor(Enum):
+class Text_Color(Enum):
     RED = "\033[31m"
     GREEN = "\033[32m"
     GREY = "\033[90m"
     RESET = "\033[0m"
 
-class SymbolIcon(Enum):
+class Symbol_Icon(Enum):
     EXPLODE = "💥"
     BOMB = "💣"
     CORRECT = "✅"
@@ -71,3 +72,9 @@ class RevealType(Enum):
     ISREVEALED = auto()
     ISFLAGGED = auto()
     ISMINE = auto()
+
+BOARD_DEPTH = 3
+TILE_SHAPE = Tile_Shape.SQ
+CORNERS = False
+RESOLUTION = Resolutions.RES_1080
+TACOS = 0

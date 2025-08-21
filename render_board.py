@@ -1,7 +1,7 @@
-import sys
+import random
 
 from board import Board
-from config import Symbol_Icon, Text_Color
+from config import SymbolIcon, TextColor
 from cursor import print_wo_newline
 
 
@@ -17,7 +17,7 @@ class RenderBoardCLI():
 
     def update_tile_symbol(self, tile):
         cli_row, cli_column = self.state_to_cli_index(tile.state_coords) 
-        
+      
         self.cli_grid[cli_row][cli_column] = self.get_tile_symbol(tile)
 
     def state_to_cli_index(self, coords):
@@ -26,24 +26,24 @@ class RenderBoardCLI():
     
     def get_tile_symbol(self, tile):        
         if tile.game_loss_symbol == "CORRECT":
-            return Symbol_Icon.CORRECT.value
+            return SymbolIcon.CORRECT.value
         elif tile.game_loss_symbol == "MISSED":
-            return Symbol_Icon.BOMB.value
+            return SymbolIcon.BOMB.value
         elif tile.game_loss_symbol == "INCORRECT":
-            return Symbol_Icon.INCORRECT.value
+            return SymbolIcon.INCORRECT.value
         
         if not tile.is_revealed:
             if tile.is_flagged:
-                return Symbol_Icon.FLAG.value
+                return SymbolIcon.FLAG.value
             else:
-                return Symbol_Icon.UNKNOWN.value
+                return SymbolIcon.UNKNOWN.value
 
         if tile.is_mine:
-            return Symbol_Icon.EXPLODE.value
+            return SymbolIcon.EXPLODE.value
 
         digit = self.compose_fullwidth_digit(tile.adjacent_mines)
         color = self.get_digit_color(tile)
-        reset_color = Text_Color.RESET.value
+        reset_color = TextColor.RESET.value
         return f'{color}{digit}{reset_color}'
 
     def get_digit_color(self, tile):
@@ -58,18 +58,18 @@ class RenderBoardCLI():
                     neighbor_pass += 1
             
             if neighbor_pass == len(tile.neighbors):
-                return Text_Color.GREY.value
+                return TextColor.GREY.value
             else:
-                return Text_Color.GREEN.value
+                return TextColor.GREEN.value
         
         else:
-            return Text_Color.RED.value
+            return TextColor.RED.value
 
     def compose_fullwidth_digit(self, digit):
         if digit <= 9:
-            return Symbol_Icon.DIGITS.value[digit]
+            return SymbolIcon.DIGITS.value[digit]
         else:
-            return "".join(Symbol_Icon.DIGITS.value[int(d)] for d in str(digit)) # Parses the digits of a number and combines separate fullwidth versions??
+            return "".join(SymbolIcon.DIGITS.value[int(d)] for d in str(digit)) # Parses the digits of a number and combines separate fullwidth versions??
 
     def populate_cli_grid(self):
         for r in range(self.total_cli_depth + 1):
@@ -86,52 +86,49 @@ class RenderBoardCLI():
 
         if r == 1:
             if c == 1: 
-                return Symbol_Icon.TOPLEFT
+                return SymbolIcon.TOPLEFT.value
             elif c == self.total_cli_depth: 
-                return Symbol_Icon.TOPRIGHT
+                return SymbolIcon.TOPRIGHT.value
             elif c % 2 == 0: 
-                return Symbol_Icon.HORIZ
+                return SymbolIcon.HORIZ.value
             else:
-                return Symbol_Icon.TOPTEE
+                return SymbolIcon.TOPTEE.value
         
         elif r == self.total_cli_depth:
             if c == 1:
-                return Symbol_Icon.BOTLEFT
+                return SymbolIcon.BOTLEFT.value
             elif c == self.total_cli_depth:
-                return Symbol_Icon.BOTRIGHT              
+                return SymbolIcon.BOTRIGHT.value
             elif c % 2 == 0:
-                return Symbol_Icon.HORIZ
+                return SymbolIcon.HORIZ.value
             else:
-                return Symbol_Icon.BOTTEE
+                return SymbolIcon.BOTTEE.value
 
         elif r % 2 == 0:
             if c % 2 == 1:
-                return Symbol_Icon.VERT
+                return SymbolIcon.VERT.value
             else:
-                return Symbol_Icon.EMPTY
+                return SymbolIcon.EMPTY.value
 
         else:
             if c == 1:
-                return Symbol_Icon.LEFTTEE
+                return SymbolIcon.LEFTTEE.value
             elif c == self.total_cli_depth:
-                return Symbol_Icon.RIGHTTEE
+                return SymbolIcon.RIGHTTEE.value
             elif c % 2 == 0:
-                return Symbol_Icon.HORIZ
+                return SymbolIcon.HORIZ.value
             else:
-                return Symbol_Icon.TEE                   
+                return SymbolIcon.TEE.value            
 
     def cli_outline_indices(self, r, c):
         if r == 0:
-            if c == 0:
-                return Symbol_Icon.EMPTY
-            elif c % 2 == 1:
+            if c == 0 or c % 2 == 1:
                 return " "
             else:
                 return self.compose_fullwidth_digit(c / 2)
-        
         else:
             if r % 2 == 1:
-                return Symbol_Icon.EMPTY
+                return " "
             else:
                 return self.compose_fullwidth_digit(r / 2)
 
@@ -145,12 +142,44 @@ class RenderBoardCLI():
         remaining_mines = self.board.mine_field.remaining_mines
         board_width = board.depth * 3 + 1
 
-        print_wo_newline(f'\033[{ANSI_row};2H{remaining_mines:^{board_width}}')
+        return print_wo_newline(f'\033[{ANSI_row};2H{remaining_mines:^{board_width}}')
 
     def draw_tile(self, tile):
         cli_row, cli_column = state_to_cli_index(tile.state_coords)
         symbol = self.cli_grid[cli_row][cli_column]
-        ANSI_row = coords[0] * 3
-        ANSI_column = coords[1] * 2 + 1 
+        ANSI_row = tile.state_coords[0] * 3
+        ANSI_column = tile.state_coords[1] * 2 + 1 
 
-        print_wo_newline(f'\033[{ANSI_row};{ANSI_column}H{symbol}')
+        return print_wo_newline(f'\033[{ANSI_row};{ANSI_column}H{symbol}')
+
+    def first_tile_reveal(self):
+        extra_safe_tiles = set()
+        kinda_safe_tiles = set()
+
+        for i, tile in self.board.tiles.items():
+            if tile.adjacent_mines == 0:
+                extra_safe_tiles.add(i)
+
+        if len(extra_safe_tiles) > 0: 
+            start_tile_index = extra_safe_tiles[random.choice(len(extra_safe_tiles))]
+            start_tile = board.tiles[start_tile_index]
+
+            start_tile.reveal_tile()
+            self.update_tile_symbol(start_tile)
+            self.draw_tile(start_tile)
+            return 
+
+        else:
+            for i, tile in board.tiles.items():
+                if tile.adjacent_mines <= 2:
+                    kinda_safe_tiles.add(i)
+            
+            three_or_less = min(3, len(kinda_safe_tiles))
+            start_tiles_indices = random.sample(kinda_safe_tiles, three_or_less)
+
+            for i in start_tiles_indices:
+                start_tile = board.tiles[i]
+                
+                start_tile.reveal_tile()
+                self.update_tile_symbol(start_tile)
+                self.draw_tile(start_tile)

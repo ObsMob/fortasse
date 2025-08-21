@@ -1,35 +1,26 @@
 from cursor import print_w_flush, print_wo_newline, move_cursor
-from config import (
-    BOARD_DEPTH,
-    TILE_SHAPE,
-    CORNERS,
-    RESOLUTION,
-    Resolutions,
-    Menu,
-    Symbol_Icon,
-)
+from config import Menu, SymbolIcon
+from settings import settings
 
 class RenderMenuCLI():
-    def __init__(self):
+    def __init__(self, settings):
         self.options_menu = Menu.MAIN 
         self.width = 50
         self.greeting = "Welcome to Bomb-Boinger!"
         self.parameters_header = "Current Parameters"
         self.options_header = "Input Options. Press:"
         self.prompt_lock = '(Currently locked. Soon™)'
+        self.max_options_rows = None
 
-        self.populate_parameters()
-        self.populate_options_sections()
-
-        self.max_options_rows = max(len(options_list) for options_list in self.options_sections.values())
-
+        self.update_width()
+        self.update_width_references()
 
     def populate_parameters(self):
         self.parameters =[
-            f'Board Size = {BOARD_DEPTH}',                          # ANSI(8, 14) r, c (including outline)
-            f'Tile Shape = {TILE_SHAPE.value} {self.prompt_lock}',       # ANSI(9, 14)
-            f'Corners Touch = {CORNERS} {self.prompt_lock}',             # ANSI(10, 17)
-            f'Current Resolution = {RESOLUTION.value}'              # ANSI(11, 22)
+            f'Board Size = {settings["BOARD_DEPTH"]}',                               # ANSI(8, 14) r, c (including outline)
+            f'Tile Shape = {settings["TILE_SHAPE"].value} {self.prompt_lock}',       # ANSI(9, 14)
+            f'Corners Touch = {settings["CORNERS"]} {self.prompt_lock}',             # ANSI(10, 17)
+            f'Current Resolution = {settings["RESOLUTION"].value}'                   # ANSI(11, 22)
         ]
 
     def populate_options_sections(self):
@@ -69,24 +60,26 @@ class RenderMenuCLI():
             ]
         }
 
+    def update_width(self):
+        match settings["RESOLUTION"]:
+        # case Resolutions.RES_480:
+        #     self.width = round(self.width * .48)
+        # case Resolutions.RES_720:
+        #     self.width = round(self.width * .66)
+        # case Resolutions.RES_900:
+        #     self.width = round(self.width * .83)
+        case Resolutions.RES_1080:
+            pass
+        case Resolutions.RES_2K:
+            self.width = round(self.width * 1.33)
+        case Resolutions.RES_4K:
+            self.width = round(self.width * 2)
+
     def update_width_references(self):
-            match RESOLUTION:
-            # case Resolutions.RES_480:
-            #     self.width = round(self.width * .48)
-            # case Resolutions.RES_720:
-            #     self.width = round(self.width * .66)
-            # case Resolutions.RES_900:
-            #     self.width = round(self.width * .83)
-            case Resolutions.RES_1080:
-                pass
-            case Resolutions.RES_2K:
-                self.width = round(self.width * 1.33)
-            case Resolutions.RES_4K:
-                self.width = round(self.width * 2)
-            
-            self.populate_parameters()
-            self.populate_options_sections()
-            self.max_options_rows = max(len(options_list) for options_list in self.options_sections.values())
+
+        self.populate_parameters()
+        self.populate_options_sections()
+        self.max_options_rows = max(len(options_list) for options_list in self.options_sections.values())
 
     def draw_menu(self):
 
@@ -151,37 +144,37 @@ class RenderMenuCLI():
         self.bot_row()
         # Row 22
 
-    def draw_new_parameter(self):
+    def draw_updated_parameter(self):
 
         match self.options_menu:
             case Menu.DEPTH:
-                row, col, updated_text = 8, 14, BOARD_DEPTH
+                row, col, updated_text = 8, 14, settings["BOARD_DEPTH"]
             case Menu.TILE:
-                row, col, updated_text = 9, 14, TILE_SHAPE.value
+                row, col, updated_text = 9, 14, settings["TILE_SHAPE"].value
             case Menu.CORNERS:
-                row, col, updated_text = 10, 17, CORNERS
+                row, col, updated_text = 10, 17, settings["CORNERS"]
             case Menu.RES:
-                row, col, updated_text = 11, 22, RESOLUTION.value
+                row, col, updated_text = 11, 22, settings["RESOLUTION"].value
 
         return self.update_text(row, col, updated_text)
 
     def top_row(self):
-        return print_w_flush(f'{Symbol_Icon.TOPLEFT}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.TOPRIGHT}')
+        return print_w_flush(f'{SymbolIcon.TOPLEFT.value}{SymbolIcon.HORIZ.value * self.width}{SymbolIcon.TOPRIGHT.value}')
 
     def bot_row(self):
-        return print_w_flush(f'{Symbol_Icon.BOTLEFT}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.BOTRIGHT}')
+        return print_w_flush(f'{SymbolIcon.BOTLEFT.value}{SymbolIcon.HORIZ.value * self.width}{SymbolIcon.BOTRIGHT.value}')
     
     def divider_row(self):
-        return print_w_flush(f'{Symbol_Icon.LEFTTEE}{Symbol_Icon.HORIZ * self.width}{Symbol_Icon.RIGHTTEE}')
+        return print_w_flush(f'{SymbolIcon.LEFTTEE.value}{SymbolIcon.HORIZ.value * self.width}{SymbolIcon.RIGHTTEE.value}')
     
     def option_row(self, option_text):
-        return print_w_flush(f'{Symbol_Icon.VERT}{option_text:<{self.width}}{Symbol_Icon.VERT}')
+        return print_w_flush(f'{SymbolIcon.VERT.value}{option_text:<{self.width}}{SymbolIcon.VERT.value}')
 
     def empty_row(self):
-        return print_w_flush(f'{Symbol_Icon.VERT}{" " * self.width}{Symbol_Icon.VERT}')
+        return print_w_flush(f'{SymbolIcon.VERT.value}{" " * self.width}{SymbolIcon.VERT.value}')
 
     def header_row(self, header_text):
-        return print_w_flush(f'{Symbol_Icon.VERT}{header_text:^{self.width}}{Symbol_Icon.VERT}')
+        return print_w_flush(f'{SymbolIcon.VERT.value}{header_text:^{self.width}}{SymbolIcon.VERT.value}')
 
     def update_text(self, row, col, updated_text):
         return print_wo_newline(f'\033[{row};{col}H{updated_text:<{self.width - col}}')

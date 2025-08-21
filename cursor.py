@@ -17,7 +17,7 @@ def cursor_to_sys_msg(row):
     move_cursor(row - 1)
     reset_line()
 
-def input_invalid(arg, row, usage=None, width=4):
+def input_invalid(arg, row, usage=None, width=4): # 4 is just as a random default. Width only passes for "range" and 4 would give "2 and 2" /shrug
     
     cursor_to_sys_msg(row)
 

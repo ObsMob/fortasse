@@ -1,15 +1,25 @@
 import sys
 
 import cursor
-import config
+from settings import settings, update_setting
 from board import Board
 from mines import MineField
 from render_menu import RenderMenuCLI
 from render_board import RenderBoardCLI
+from config import (
+    TileShape,
+    SymbolIcon,
+    Resolutions,
+    Menu,
+    MenuAction,
+    GameResult,
+    PostGameAction,
+    RevealType,
+)
 
 
 def handle_first_load():
-    if config.FIRST_LOAD:
+    if settings["FIRST_LOAD"] == True:
         cursor.print_w_flush("\nThanks for trying Bomb-Boinger!\n") # row 3
         cursor.print_w_flush("This is your first time loading, default Resolution scale is set to 1080p")
         cursor.print_w_flush("Would you like to update Resolution scale?\n") # row 6
@@ -38,10 +48,10 @@ def handle_first_load():
                     if res_input == "1":
                         break
                     elif res_input == "2":
-                        config.RESOLUTION = config.Resolutions.RES_2K
+                        update_setting("RESOLUTION", Resolutions.RES_2K)
                         break
                     elif res_input == "3":
-                        config.RESOLUTION = config.Resolutions.RES_4K
+                        update_setting("RESOLUTION", Resolutions.RES_4K)
                         break
                     else:
                         cursor.input_invalid(res_input, prompt_row)
@@ -52,9 +62,8 @@ def handle_first_load():
             else:
                 cursor.input_invalid(user_input, prompt_row)
         
-        config.FIRST_LOAD = False
-        print("DEBUG: FIRST_LOAD =", config.FIRST_LOAD)
-        
+        update_setting("FIRST_LOAD", False)
+
 def quit_game():
     sys.standout.write("\033[2J\033[H")
     cursor.print_w_flush("\nThanks for Boinging those Bombs!\n")
@@ -62,14 +71,14 @@ def quit_game():
 
 def menu_load():
     cursor.move_cursor()
-    menu = RenderMenuCLI()
+    menu = RenderMenuCLI(settings)
     menu.draw_menu
     prompt_row = 24
     
     while True:
         match menu.options_menu:
             
-            case config.Menu.MAIN:
+            case Menu.MAIN:
                 while True:
                     cursor.move_cursor(prompt_row)
                     cursor.reset_line()                    
@@ -79,43 +88,43 @@ def menu_load():
                         return MenuAction.START
                     elif user_input == "E":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_new_option_menu()
+                        menu.draw_option_section()
                         break
                     elif user_input == "Q":
                         return MenuAction.QUIT
                     else:
                         cursor.input_invalid(user_input, prompt_row)
 
-            case config.Menu.EDIT:
+            case Menu.EDIT:
                 while True:
                     cursor.move_cursor(prompt_row)
                     cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
-                    if user_input == "S":
+                    if user_input == "B":
+                        menu.options_menu = Menu.MAIN
+                        menu.draw_option_section()
+                        break 
+                    elif user_input == "S":
                         menu.options_menu = Menu.DEPTH
-                        menu.draw_new_option_menu()
+                        menu.draw_option_section()
                         break
                     elif user_input == "T":
                         menu.options_menu = Menu.TILE
-                        menu.draw_new_option_menu()
+                        menu.draw_option_section()
                         break
                     elif user_input == "C":
-                        menu.options_menu = Menu.config.CORNERS
-                        menu.draw_new_option_menu()
+                        menu.options_menu = Menu.CORNERS
+                        menu.draw_option_section()
                         break
                     elif user_input == "R":
                         menu.options_menu = Menu.RES
-                        menu.draw_new_option_menu()
-                        break
-                    elif user_input == "B":
-                        menu.options_menu = Menu.MAIN
-                        menu.draw_new_option_menu()
-                        break                        
+                        menu.draw_option_section()
+                        break   
                     else:
                         cursor.input_invalid(user_input, prompt_row)
 
-            case config.Menu.DEPTH:
+            case Menu.DEPTH:
                 while True:
                     cursor.move_cursor(prompt_row)
                     cursor.reset_line()
@@ -123,14 +132,14 @@ def menu_load():
                     
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_new_option_menu()
+                        menu.draw_option_section()
                         break
                     elif user_input.isdigit():
                         value = int(user_input)
 
                         if 2 <= value <= menu.width - 2:
-                            config.BOARD_DEPTH = value
-                            menu.draw_new_parameter()
+                            update_setting("BOARD_DEPTH", value)
+                            menu.draw_updated_parameter()
                             cursor.input_valid(arg, prompt_row)
                             break
                         else:
@@ -138,76 +147,76 @@ def menu_load():
                     else:
                         cursor.input_invalid(user_input, prompt_row)
 
-            case config.Menu.TILE:
+            case Menu.TILE:
                 while True:
                     cursor.move_cursor()
                     cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
-                    if user_input == "T":
+                    if user_input == "B":
+                        menu.options_menu = Menu.EDIT
+                        menu.draw_option_section()
+                        break   
+                    elif user_input == "T":
                         cursor.input_invalid(user_input, prompt_row, "locked")
                         break
                     elif user_input == "S":
-                        config.TILE_SHAPE = config.Tile_Shape.SQ
-                        menu.draw_new_parameter()
+                        update_setting("TILE_SHAPE", TileShape.SQ)
+                        menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)
                         break
                     elif user_input == "H":
                         cursor.input_invalid(user_input, prompt_row, "locked")
-                        break
-                    elif user_input == "B":
-                        menu.options_menu = Menu.EDIT
-                        menu.draw_new_option_menu()
-                        break                        
+                        break                     
                     else:
                         cursor.input_invalid(user_input, prompt_row)
 
-            case config.Menu.CORNERS:
+            case Menu.CORNERS:
                 while True:
                     cursor.move_cursor()
                     ansi_reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
-                    if user_input == "0":
-                        config.CORNERS = False
-                        menu.draw_new_parameter()
+                    if user_input == "B":
+                        menu.options_menu = Menu.EDIT
+                        menu.draw_option_section()
+                        break   
+                    elif user_input == "0":
+                        update_setting("CORNERS", False)
+                        menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)
                         break
                     elif user_input == "1":
                         cursor.input_invalid(user_input, prompt_row, "locked")
-                        break
-                    elif user_input == "B":
-                        menu.options_menu = Menu.EDIT
-                        menu.draw_new_option_menu()
-                        break                        
+                        break                     
                     else:
                         cursor.input_invalid(user_input, prompt_row)
 
-            case config.Menu.RES:
+            case Menu.RES:
                 while True:
                     cursor.move_cursor()
                     cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
+                    if user_input == "B":
+                        menu.options_menu = Menu.EDIT
+                        menu.draw_option_section()
+                        break
                     if user_input == "1":
-                        config.RESOLUTION = config.Resolutions.RES_1080
-                        menu.draw_new_parameter()
-                        cursor.input_valid(user_input,prompt_row)
+                        update_setting("RESOLUTION", Resolutions.RES_1080)
+                        menu.draw_updated_parameter()
+                        cursor.input_valid(user_input, prompt_row)
                         break
                     elif user_input == "2":
-                        config.RESOLUTION = config.Resolutions.RES_2K
-                        menu.draw_new_parameter()
-                        cursor.input_valid(user_input,prompt_row)
+                        update_setting("RESOLUTION", Resolutions.RES_2K)
+                        menu.draw_updated_parameter()
+                        cursor.input_valid(user_input, prompt_row)
                         break
                     elif user_input == "3":
-                        config.RESOLUTION = config.Resolutions.RES_4K
-                        menu.draw_new_parameter()
+                        update_setting("RESOLUTION", Resolutions.RES_4K)
+                        menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)                        
-                        break
-                    elif user_input == "B":
-                        menu.options_menu = Menu.EDIT
-                        menu.draw_new_option_menu()
-                        break                        
+                        break                     
                     else:
                         cursor.input_invalid(user_input, prompt_row)
 
@@ -218,7 +227,7 @@ def game_over(board):
 
         tile.reveal_tile(loss=True)
         render.update_tile_symbol(tile)
-        render.render_tile(tile)
+        render.draw_tile(tile)
     
     cursor.move_cursor(board.depth * 2 + 5, 0)
     cursor.reset_line()
@@ -239,39 +248,6 @@ def game_over(board):
         else:
             cursor.input_invalid(user_input, prompt_row)
 
-def first_open_tile(board):
-    render = board.render_board
-    extra_safe_tiles = set()
-    kinda_safe_tiles = set()
-
-    for i, tile in board.tiles.items():
-        if tile.adjacent_mines == 0:
-            extra_safe_tiles.add(i)
-
-    if len(extra_safe_tiles) > 0: 
-        start_tile_index = extra_safe_tiles[random.choice(len(extra_safe_tiles))]
-        start_tile = board.tiles[start_tile_index]
-
-        start_tile.reveal_tile()
-        render.update_tile_symbol(start_tile)
-        render.draw_tile(start_tile)
-        return 
-
-    else:
-        for i, tile in board.tiles.items():
-            if tile.adjacent_mines <= 2:
-                kinda_safe_tiles.add(i)
-        
-        three_or_less = min(3, len(kinda_safe_tiles))
-        start_tiles_indices = random.sample(kinda_safe_tiles, three_or_less)
-
-        for i in start_tiles_indices:
-            start_tile = board.tiles[i]
-            
-            start_tile.reveal_tile()
-            render.update_tile_symbol(start_tile)
-            render.draw_tile(start_tile)
-
 def flood_reveal(tile, board_render):
     
     if tile.adjacent_mines == 0:
@@ -286,13 +262,14 @@ def flood_reveal(tile, board_render):
     board_render.draw_tile(tile)
 
 def game_won():
+    prompt_row = board.depth * 2 + 10
     cursor.move_cursor(board.depth * 2 + 5, 0)
     cursor.reset_line()
-    cursor.print_w_flush(f'{Symbol_Icon.TROPHY}Congratulations, You boinged all the Bombs!{Symbol_Icon.TROPHY}')
+    cursor.print_w_flush(f'{SymbolIcon.TROPHY}Congratulations, You boinged all the Bombs!{SymbolIcon.TROPHY}')
     cursor.reset_line()
-    cursor.print_w_flush(f'+1 {Symbol_Icon.TACO}')
-    TACOS += 1
-    cursor.print_w_flush(f'Total {Symbol_Icon.TACO} accrued: {Symbol_Icon.TACO * TACOS}')
+    cursor.print_w_flush(f'+1 {SymbolIcon.TACO}')
+    update_setting("TACOS", settings["TACOS"] + 1)
+    cursor.print_w_flush(f'Total {SymbolIcon.TACO} accrued: {SymbolIcon.TACO * settings["TACOS"]}')
     cursor.print_w_flush('Input "M" for Menu, or "Q" for Quit\n')
     
     while True:
@@ -323,12 +300,12 @@ def start_game(saved_mines):
 
 def game_load(board):
     cursor.move_cursor()
-    board.render_board = RenderBoardCLI()
-    render = board.render_board
+    board.board_render = RenderBoardCLI(board)
+    render = board.board_render
     render.draw_board()
     render.draw_remaining_mines()
     prompt_row = board.depth * 2 + 6
-    first_open_tile(board)
+    render.first_open_tile()
 
     while True:
 
@@ -390,6 +367,7 @@ def game_load(board):
             cursor.input_invalid(raw, prompt_row, "state")
 
 def main():
+ 
     handle_first_load()
     
     saved_mines = None

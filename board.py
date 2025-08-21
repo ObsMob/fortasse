@@ -1,14 +1,14 @@
 import math
 
-from config import BOARD_DEPTH, TILE_SHAPE
+from config import TileShape
 from tile import Tile
 
 
 class Board():
-    def __init__(self):
+    def __init__(self, settings):
         self.tiles = {}
-        self.depth = BOARD_DEPTH
-        self.tile_shape = TILE_SHAPE
+        self.depth = settings["BOARD_DEPTH"]
+        self.tile_shape = settings["TILE_SHAPE"]
         self.tile_quantity = self.get_max_tiles()
         self.mine_field = None # Minefield(board)
         self.board_render = None # RenderBoardCLI(board)
@@ -30,18 +30,18 @@ class Board():
     def get_max_tiles(self):
         match self.tile_shape:
             
-            case Tile_Shape.TRI:
+            case TileShape.TRI:
                 return self.depth ** 2 
-            case Tile_Shape.SQ:
+            case TileShape.SQ:
                 return self.depth ** 2
-            case Tile_Shape.HEX:
+            case TileShape.HEX:
                 return 3 * self.depth * (self.depth - 1) + 1
 
     def add_edges(self):
 
         match self.tile_shape:
 
-            case Tile_Shape.TRI:
+            case TileShape.TRI:
                 for i in range(1, self.tile_quantity + 1):              
                     row = math.ceil(i ** 0.5)
                     row_start = (row - 1) ** 2 + 1
@@ -63,7 +63,7 @@ class Board():
                         elif i % 2 == 1:
                             tile_mapping[i].add(i - (row - 1) * 2)
             
-            case Tile_Shape.SQ:
+            case TileShape.SQ:
                 for i in range(1, self.tile_quantity + 1):  
                     row = (i - 1) // self.depth + 1
                     column = (i - 1) % self.depth + 1
@@ -77,7 +77,7 @@ class Board():
                     if column != self.depth:
                         tile_mapping[i].add(i + 1)
 
-            case Tile_Shape.HEX:
+            case TileShape.HEX:
 
                 def hex_axial_mapping():
                     index_to_axial = {}
