@@ -17,7 +17,7 @@ def cursor_to_sys_msg(row):
     move_cursor(row - 1)
     reset_line()
 
-def input_invalid(arg, row, usage=None, width=4): # 4 is just as a random default. Width only passes for "range" and 4 would give "2 and 2" /shrug
+def input_invalid(arg, row, usage=None, width=4, depth=None): # 4 is just as a random default. Width only passes for "range" and 4 would give "2 and 2" /shrug
     
     cursor_to_sys_msg(row)
 
@@ -27,13 +27,15 @@ def input_invalid(arg, row, usage=None, width=4): # 4 is just as a random defaul
         print_wo_newline(f'Invalid Selection "{arg}. Currently Locked. Check back next update.')
     elif usage == "state":
         print_wo_newline(f'Invalid Selection "{arg}". Usage: "1,2" for Row 1, Column 2')
+    elif usage == "coords":
+        print_wo_newline(f'Invalid Selection "{arg}". Tile Indices out of range "1-{depth}"')
     elif usage == "range":
         print_wo_newline(f'Invalid Range "{arg}". Must be integer between 2 and {width - 2}')
     elif usage == "reveal":
         print_wo_newline(f'Invalid Action. Tile at {arg} is already revealed!')
     elif usage == "flag":
         print_wo_newline(f'Invalid Action. Tile at {arg} is Flagged. To reveal, first unflag Tile.')
-    
+
     cursor_to_prompt(row)
 
 def input_valid(arg, row):

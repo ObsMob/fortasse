@@ -2,7 +2,7 @@ import random
 
 from board import Board
 from config import SymbolIcon, TextColor
-from cursor import print_wo_newline
+from cursor import print_wo_newline, print_w_flush
 
 
 class RenderBoardCLI():
@@ -125,27 +125,38 @@ class RenderBoardCLI():
             if c == 0 or c % 2 == 1:
                 return " "
             else:
-                return self.compose_fullwidth_digit(c / 2)
+                return self.compose_fullwidth_digit(c // 2)
         else:
             if r % 2 == 1:
                 return " "
             else:
-                return self.compose_fullwidth_digit(r / 2)
+                return self.compose_fullwidth_digit(r // 2)
 
     def draw_board(self):
-        for row in range(len(self.cli_grid)):
-            for col in range(len(row)):
-                print_wo_newline(self.cli_grid[row][col])
+        for r in range(len(self.cli_grid)):
+            for c in range(len(self.cli_grid[r])):
+                if(
+                    r == 0 and c == 0 or
+                    r % 2 == 1 and c == 0
+                ):
+                    print_wo_newline(" ")
+                elif r % 2 == 1 and c % 2 == 0:
+                    print_wo_newline(SymbolIcon.HORIZ.value)
+
+                if c == len(self.cli_grid[r]) - 1:
+                    print_w_flush(self.cli_grid[r][c])
+                else:
+                    print_wo_newline(self.cli_grid[r][c])
 
     def draw_remaining_mines(self):
         ANSI_row = self.total_cli_depth + 2
         remaining_mines = self.board.mine_field.remaining_mines
-        board_width = board.depth * 3 + 1
+        board_width = self.board.depth * 3 + 1
 
-        return print_wo_newline(f'\033[{ANSI_row};2H{remaining_mines:^{board_width}}')
+        return print_wo_newline(f'\033[{ANSI_row};2H{"Remaining Mines: " + str(remaining_mines):^{board_width}}')
 
     def draw_tile(self, tile):
-        cli_row, cli_column = state_to_cli_index(tile.state_coords)
+        cli_row, cli_column = self.state_to_cli_index(tile.state_coords)
         symbol = self.cli_grid[cli_row][cli_column]
         ANSI_row = tile.state_coords[0] * 3
         ANSI_column = tile.state_coords[1] * 2 + 1 
@@ -157,12 +168,12 @@ class RenderBoardCLI():
         kinda_safe_tiles = set()
 
         for i, tile in self.board.tiles.items():
-            if tile.adjacent_mines == 0:
+            if tile.adjacent_mines == 0 and not tile.is_mine:
                 extra_safe_tiles.add(i)
 
-        if len(extra_safe_tiles) > 0: 
-            start_tile_index = extra_safe_tiles[random.choice(len(extra_safe_tiles))]
-            start_tile = board.tiles[start_tile_index]
+        if extra_safe_tiles: 
+            start_tile_index = random.choice(list(extra_safe_tiles))
+            start_tile = self.board.tiles[start_tile_index]
 
             start_tile.reveal_tile()
             self.update_tile_symbol(start_tile)
@@ -170,15 +181,15 @@ class RenderBoardCLI():
             return 
 
         else:
-            for i, tile in board.tiles.items():
-                if tile.adjacent_mines <= 2:
+            for i, tile in self.board.tiles.items():
+                if tile.adjacent_mines <= 2 and not tile.is_mine:
                     kinda_safe_tiles.add(i)
             
             three_or_less = min(3, len(kinda_safe_tiles))
             start_tiles_indices = random.sample(kinda_safe_tiles, three_or_less)
 
             for i in start_tiles_indices:
-                start_tile = board.tiles[i]
+                start_tile = self.board.tiles[i]
                 
                 start_tile.reveal_tile()
                 self.update_tile_symbol(start_tile)

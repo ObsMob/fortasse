@@ -1,7 +1,7 @@
 import sys
 
 import cursor
-from settings import settings, update_setting
+from game_settings import load_settings, update_setting, save_settings
 from board import Board
 from mines import MineField
 from render_menu import RenderMenuCLI
@@ -17,6 +17,7 @@ from config import (
     RevealType,
 )
 
+settings = load_settings()
 
 def handle_first_load():
     if settings["FIRST_LOAD"] == True:
@@ -46,13 +47,15 @@ def handle_first_load():
                     res_input = input("Select option: ").strip()
 
                     if res_input == "1":
-                        break
+                        return
                     elif res_input == "2":
                         update_setting("RESOLUTION", Resolutions.RES_2K)
-                        break
+                        update_setting("FIRST_LOAD", False)
+                        return
                     elif res_input == "3":
                         update_setting("RESOLUTION", Resolutions.RES_4K)
-                        break
+                        update_setting("FIRST_LOAD", False)
+                        return
                     else:
                         cursor.input_invalid(res_input, prompt_row)
                 break
@@ -65,15 +68,16 @@ def handle_first_load():
         update_setting("FIRST_LOAD", False)
 
 def quit_game():
-    sys.standout.write("\033[2J\033[H")
+    sys.stdout.write("\033[2J\033[H")
     cursor.print_w_flush("\nThanks for Boinging those Bombs!\n")
     sys.exit(0)
 
-def menu_load():
+def menu_load(settings):
     cursor.move_cursor()
     menu = RenderMenuCLI(settings)
-    menu.draw_menu
-    prompt_row = 24
+    sys.stdout.write("\033[2J\033[H")
+    menu.draw_menu()
+    prompt_row = 25
     
     while True:
         match menu.options_menu:
@@ -139,8 +143,9 @@ def menu_load():
 
                         if 2 <= value <= menu.width - 2:
                             update_setting("BOARD_DEPTH", value)
+                            menu.populate_parameters()
                             menu.draw_updated_parameter()
-                            cursor.input_valid(arg, prompt_row)
+                            cursor.input_valid(value, prompt_row)
                             break
                         else:
                             cursor.input_invalid(user_input, prompt_row, "range", menu.width)
@@ -149,7 +154,7 @@ def menu_load():
 
             case Menu.TILE:
                 while True:
-                    cursor.move_cursor()
+                    cursor.move_cursor(prompt_row)
                     cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
@@ -162,6 +167,7 @@ def menu_load():
                         break
                     elif user_input == "S":
                         update_setting("TILE_SHAPE", TileShape.SQ)
+                        menu.populate_parameters()
                         menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)
                         break
@@ -173,8 +179,8 @@ def menu_load():
 
             case Menu.CORNERS:
                 while True:
-                    cursor.move_cursor()
-                    ansi_reset_line()                    
+                    cursor.move_cursor(prompt_row)
+                    cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
@@ -183,6 +189,7 @@ def menu_load():
                         break   
                     elif user_input == "0":
                         update_setting("CORNERS", False)
+                        menu.populate_parameters()
                         menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)
                         break
@@ -194,7 +201,7 @@ def menu_load():
 
             case Menu.RES:
                 while True:
-                    cursor.move_cursor()
+                    cursor.move_cursor(prompt_row)
                     cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
@@ -204,16 +211,22 @@ def menu_load():
                         break
                     if user_input == "1":
                         update_setting("RESOLUTION", Resolutions.RES_1080)
+                        menu.update_width()
+                        menu.update_width_references()
                         menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)
                         break
                     elif user_input == "2":
                         update_setting("RESOLUTION", Resolutions.RES_2K)
+                        menu.update_width()
+                        menu.update_width_references()                        
                         menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)
                         break
                     elif user_input == "3":
                         update_setting("RESOLUTION", Resolutions.RES_4K)
+                        menu.update_width()
+                        menu.update_width_references()                        
                         menu.draw_updated_parameter()
                         cursor.input_valid(user_input, prompt_row)                        
                         break                     
@@ -261,7 +274,7 @@ def flood_reveal(tile, board_render):
     board_render.update_tile_symbol(tile)
     board_render.draw_tile(tile)
 
-def game_won():
+def game_won(settings):
     prompt_row = board.depth * 2 + 10
     cursor.move_cursor(board.depth * 2 + 5, 0)
     cursor.reset_line()
@@ -282,8 +295,8 @@ def game_won():
         else:
             cursor.input_invalid(user_input, prompt_row)
 
-def start_game(saved_mines):
-    board = Board()
+def start_game(saved_mines, settings):
+    board = Board(settings)
     board.mine_field = MineField(board)
 
     if saved_mines == None:
@@ -291,7 +304,7 @@ def start_game(saved_mines):
     else:
         board.mine_field.mines = saved_mines
 
-    board.mine_field.update_remaining_mines()
+    board.mine_field.set_remaining_mines()
     board.populate_tiles_data()
 
     game_result = game_load(board)
@@ -302,14 +315,16 @@ def game_load(board):
     cursor.move_cursor()
     board.board_render = RenderBoardCLI(board)
     render = board.board_render
+    sys.stdout.write("\033[2J\033[H")
     render.draw_board()
     render.draw_remaining_mines()
+    render.first_tile_reveal()
+
     prompt_row = board.depth * 2 + 6
-    render.first_open_tile()
 
     while True:
 
-        if board.remaining_mines == 0:
+        if board.mine_field.remaining_mines == 0:
             correct_mines = 0
 
             for tile in board.tiles:
@@ -319,92 +334,93 @@ def game_load(board):
             if correct_mines == len(board.mine_field.mines):
                 return GameResult.WIN
 
-        print_default_board_option(prompt_row)
-        raw = input("Select Option: ").strip()
-        pos = parse_tile_input(raw)
+        cursor.print_default_board_option(prompt_row)
+        raw = input("Select Option: ").strip().upper()
+        pos = cursor.parse_tile_input(raw)
         
         if raw == "Q":
             return GameResult.QUIT
         
         elif pos is not None:
-            while True:
+            r, c = pos
 
-                print_tile_options(prompt_row)
-                action = input("Select Option: ").strip()
+            if 1 <= r <= board.depth and 1 <= c <= board.depth:
+                while True:
+                    
+                    cursor.print_tile_options(prompt_row)
+                    action = input("Select Option: ").strip()
 
-                if action == "B":
-                    break
-                if action == "F":
-                    tile = board.get_tile_from_coords(pos)
-                    flag = tile.flag_tile()
-
-                    if flag == RevealType.ISREVEALED:
-                        cursor.input_invalid(pos, prompt_row, "reveal")
-                    else:
-                        render.update_tile_symbol(tile)
-                        render.draw_tile(tile)
-                        render.draw_remaining_mines()
+                    if action == "B":
                         break
+                    if action == "F":
+                        tile = board.get_tile_from_coords(pos)
+                        flag = tile.flag_tile()
 
-                if action == "R":
-                    tile = board.get_tile_from_coords(pos)
-                    reveal = tile.reveal_tile()
+                        if flag == RevealType.ISREVEALED:
+                            cursor.input_invalid(pos, prompt_row, "reveal")
+                        else:
+                            render.update_tile_symbol(tile)
+                            render.draw_tile(tile)
+                            render.draw_remaining_mines()
+                            break
 
-                    if reveal == RevealType.ISREVEALED:
-                        cursor.input_invalid(pos, prompt_row, "reveal")
-                    if reveal == RevealType.ISFLAGGED:
-                        cursor.input_invalid(pos, prompt_row, "flag")
-                    if reveal == RevealType.ISMINE:
-                        return GameResult.LOSS
-                    else:
-                        render.update_tile_symbol(tile)
-                        render.draw_tile(tile)
+                    if action == "R":
+                        tile = board.get_tile_from_coords(pos)
+                        reveal = tile.reveal_tile()
 
-                        flood_reveal(tile, render)
-                        break
+                        if reveal == RevealType.ISREVEALED:
+                            cursor.input_invalid(pos, prompt_row, "reveal")
+                        if reveal == RevealType.ISFLAGGED:
+                            cursor.input_invalid(pos, prompt_row, "flag")
+                        if reveal == RevealType.ISMINE:
+                            return GameResult.LOSS
+                        else:
+                            render.update_tile_symbol(tile)
+                            render.draw_tile(tile)
+                            flood_reveal(tile, render)
+                            break
+            else:
+                cursor.input_invalid(pos, prompt_row, "coords", depth=board.depth)
             
         else:
             cursor.input_invalid(raw, prompt_row, "state")
 
-def main():
+def main(settings):
  
     handle_first_load()
     
     saved_mines = None
 
     while True:
-        menu_action = menu_load()
+        menu_action = menu_load(settings)
 
         if menu_action == MenuAction.START:
 
             while True:
-                game_result, saved_mines = start_game(saved_mines)
+                game_result, saved_mines = start_game(saved_mines, settings)
 
                 if game_result == GameResult.QUIT:
                     break
+                elif game_result == GameResult.WON:
+                    post_game_action = game_won(settings)
+                elif game_result == GameResult.LOSS:
+                    post_game_action = game_over()
 
-                else:
-                    if game_result == GameResult.WON:
-                        post_game_action = game_won()
-                    elif game_result == GameResult.LOSS:
-                        post_game_action = game_over()
-                    else:
-                        post_game_action = PostGameAction.MENU
-                    
-
-                    if post_game_action == PostGameAction.RESTART:
-                        continue
-                    elif post_game_action == PostGameAction.MENU:
-                        saved_mines = None
-                        break
-                    elif post_game_action == PostGameAction.QUIT:
-                        return quit_game()
+                if post_game_action == PostGameAction.RESTART:
+                    continue
+                elif post_game_action == PostGameAction.MENU:
+                    saved_mines = None
+                    break
+                elif post_game_action == PostGameAction.QUIT:
+                    save_settings(settings)
+                    return quit_game()
 
         elif menu_action == MenuAction.QUIT:
             break
 
+    save_settings(settings)
     quit_game()
 
 
 if __name__ == "__main__":
-    main()
+    main(settings)

@@ -20,7 +20,7 @@ class Board():
             tile_mapping[i] = set()
 
         self.assign_state_coords()
-        self.add_edges()
+        self.add_edges(tile_mapping)
         self.map_tile_neighbors(tile_mapping)
         self.mine_field.set_tile_mine_attr()
 
@@ -37,7 +37,7 @@ class Board():
             case TileShape.HEX:
                 return 3 * self.depth * (self.depth - 1) + 1
 
-    def add_edges(self):
+    def add_edges(self, tile_mapping):
 
         match self.tile_shape:
 
@@ -150,7 +150,7 @@ class Board():
     def get_tile_from_coords(self, coords):
         row, col = coords
 
-        for tile in self.tiles:
+        for tile in self.tiles.values():
             if tile.state_coords == (row, col):
                 return tile
         

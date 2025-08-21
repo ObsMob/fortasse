@@ -1,5 +1,7 @@
 import json
 
+from config import TileShape, Resolutions
+
 
 def load_settings():
     with open("settings.json", "r") as f:
@@ -30,5 +32,5 @@ def save_settings(settings_py):
 
 def update_setting(key, value):
     settings[key] = value
-    
+
     save_settings(settings)
