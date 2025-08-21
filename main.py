@@ -261,18 +261,23 @@ def game_over(board):
         else:
             cursor.input_invalid(user_input, prompt_row)
 
-def flood_reveal(tile, board_render):
-    
+def flood_reveal(tile, board_render, visited=None):
+    if visited is None:
+        visited = set()
+
+    if tile in visited:
+        return
+    visited.add(tile)
+
+    if not tile.is_revealed and not tile.is_flagged and not tile.is_mine:
+
+        tile.reveal_tile()
+        board_render.update_tile_symbol(tile)
+        board_render.draw_tile(tile)
+
     if tile.adjacent_mines == 0:
         for neighbor in tile.neighbors:
-            flood_reveal(neighbor, board_render)
-
-    if tile.is_revealed or tile.is_flagged or tile.is_mine:
-        return
-    
-    tile.reveal_tile()
-    board_render.update_tile_symbol(tile)
-    board_render.draw_tile(tile)
+            flood_reveal(neighbor, board_render, visited)
 
 def game_won(settings):
     prompt_row = board.depth * 2 + 10
@@ -348,7 +353,7 @@ def game_load(board):
                 while True:
                     
                     cursor.print_tile_options(prompt_row)
-                    action = input("Select Option: ").strip()
+                    action = input("Select Option: ").strip().upper()
 
                     if action == "B":
                         break
@@ -370,9 +375,9 @@ def game_load(board):
 
                         if reveal == RevealType.ISREVEALED:
                             cursor.input_invalid(pos, prompt_row, "reveal")
-                        if reveal == RevealType.ISFLAGGED:
+                        elif reveal == RevealType.ISFLAGGED:
                             cursor.input_invalid(pos, prompt_row, "flag")
-                        if reveal == RevealType.ISMINE:
+                        elif reveal == RevealType.ISMINE:
                             return GameResult.LOSS
                         else:
                             render.update_tile_symbol(tile)

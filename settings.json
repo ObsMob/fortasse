@@ -1,6 +1,6 @@
 {
-    "FIRST_LOAD": false,
-    "BOARD_DEPTH": 15,
+    "FIRST_LOAD": true,
+    "BOARD_DEPTH": 3,
     "TILE_SHAPE": "SQ",
     "CORNERS": false,
     "RESOLUTION": "RES_2K",

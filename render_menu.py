@@ -39,8 +39,8 @@ class RenderMenuCLI():
                 '"B" = Back to Main Menu'               # ANSI(20, 2)
             ],
             "board_prompt": [
-                f'Enter Integer: 2-{self.width - 2}',   # ANSI(16, 2) r, c (including outline)
-                '"B" = Back to Edit Menu'               # ANSI(17, 2)
+                f'Enter Integer: "2-{self.width - 2}"',   # ANSI(16, 2) r, c (including outline)
+                '"B" = Back to Edit Menu'                 # ANSI(17, 2)
             ],
             "tile_prompt": [
                 '"T" = Triangle - LOCKED',              # ANSI(16, 2) r, c (including outline) 
@@ -78,12 +78,12 @@ class RenderMenuCLI():
 
     def update_width_references(self):
 
-        self.populate_parameters()
         self.populate_options_sections()
         self.max_options_rows = max(len(options_list) for options_list in self.options_sections.values())
 
     def draw_menu(self):
 
+        print_w_flush("\033[2J\033[H")
         self.draw_greeting_section()
         self.draw_parameter_section()
         self.draw_option_section()
@@ -111,7 +111,7 @@ class RenderMenuCLI():
         self.divider_row()
         # Row 13
 
-    def draw_option_section(self, row=14):
+    def draw_option_section(self):
         header_text = self.options_header
 
         match self.options_menu:
@@ -130,7 +130,6 @@ class RenderMenuCLI():
 
         filler_rows = self.max_options_rows - len(self.options_sections[option_section])
         
-        move_cursor(row)
         self.header_row(header_text)
         self.empty_row()
         # Row 15
@@ -143,20 +142,6 @@ class RenderMenuCLI():
         self.empty_row()
         self.bot_row()
         # Row 22
-
-    def draw_updated_parameter(self):
-
-        match self.options_menu:
-            case Menu.DEPTH:
-                row, col, updated_text = 8, 14, self.settings["BOARD_DEPTH"]
-            case Menu.TILE:
-                row, col, updated_text = 9, 14, self.settings["TILE_SHAPE"].value
-            case Menu.CORNERS:
-                row, col, updated_text = 10, 17, self.settings["CORNERS"]
-            case Menu.RES:
-                row, col, updated_text = 11, 22, self.settings["RESOLUTION"].value
-
-        return self.update_text(row, col, updated_text)
 
     def top_row(self):
         return print_w_flush(f'{SymbolIcon.TOPLEFT.value}{SymbolIcon.HORIZ.value * self.width}{SymbolIcon.TOPRIGHT.value}')
@@ -175,6 +160,3 @@ class RenderMenuCLI():
 
     def header_row(self, header_text):
         return print_w_flush(f'{SymbolIcon.VERT.value}{header_text:^{self.width}}{SymbolIcon.VERT.value}')
-
-    def update_text(self, row, col, updated_text):
-        return print_wo_newline(f'\033[{row};{col}H{updated_text:<{self.width - col}}')

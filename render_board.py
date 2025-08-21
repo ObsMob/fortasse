@@ -2,13 +2,13 @@ import random
 
 from board import Board
 from config import SymbolIcon, TextColor
-from cursor import print_wo_newline, print_w_flush
+from cursor import print_wo_newline, print_w_flush, reset_line
 
 
 class RenderBoardCLI():
     def __init__(self, board):
         self.board = board
-        self.total_cli_depth = board.depth * 2 + 1
+        self.total_cli_depth = board.depth * 2 + 2
         self.cli_grid = []
 
         self.populate_cli_grid()
@@ -41,7 +41,7 @@ class RenderBoardCLI():
         if tile.is_mine:
             return SymbolIcon.EXPLODE.value
 
-        digit = self.compose_fullwidth_digit(tile.adjacent_mines)
+        digit = SymbolIcon.DIGITS.value[tile.adjacent_mines]
         color = self.get_digit_color(tile)
         reset_color = TextColor.RESET.value
         return f'{color}{digit}{reset_color}'
@@ -65,12 +65,6 @@ class RenderBoardCLI():
         else:
             return TextColor.RED.value
 
-    def compose_fullwidth_digit(self, digit):
-        if digit <= 9:
-            return SymbolIcon.DIGITS.value[digit]
-        else:
-            return "".join(SymbolIcon.DIGITS.value[int(d)] for d in str(digit)) # Parses the digits of a number and combines separate fullwidth versions??
-
     def populate_cli_grid(self):
         for r in range(self.total_cli_depth + 1):
             row = [] 
@@ -90,7 +84,7 @@ class RenderBoardCLI():
             elif c == self.total_cli_depth: 
                 return SymbolIcon.TOPRIGHT.value
             elif c % 2 == 0: 
-                return SymbolIcon.HORIZ.value
+                return SymbolIcon.HORIZ.value * 2
             else:
                 return SymbolIcon.TOPTEE.value
         
@@ -100,7 +94,7 @@ class RenderBoardCLI():
             elif c == self.total_cli_depth:
                 return SymbolIcon.BOTRIGHT.value
             elif c % 2 == 0:
-                return SymbolIcon.HORIZ.value
+                return SymbolIcon.HORIZ.value * 2
             else:
                 return SymbolIcon.BOTTEE.value
 
@@ -116,52 +110,44 @@ class RenderBoardCLI():
             elif c == self.total_cli_depth:
                 return SymbolIcon.RIGHTTEE.value
             elif c % 2 == 0:
-                return SymbolIcon.HORIZ.value
+                return SymbolIcon.HORIZ.value * 2
             else:
                 return SymbolIcon.TEE.value            
 
     def cli_outline_indices(self, r, c):
-        if r == 0:
-            if c == 0 or c % 2 == 1:
-                return " "
+        if c == 0:
+            if r == 0 or r % 2 == 1:
+                return SymbolIcon.EMPTY.value
             else:
-                return self.compose_fullwidth_digit(c // 2)
+                return f'{r // 2:>2}'
         else:
-            if r % 2 == 1:
+            if c % 2 == 1:
                 return " "
             else:
-                return self.compose_fullwidth_digit(r // 2)
+                return f'{c // 2:>2}'
 
     def draw_board(self):
+        
+        print_w_flush("\033[2J\033[H")
+
         for r in range(len(self.cli_grid)):
             for c in range(len(self.cli_grid[r])):
-                if(
-                    r == 0 and c == 0 or
-                    r % 2 == 1 and c == 0
-                ):
-                    print_wo_newline(" ")
-                elif r % 2 == 1 and c % 2 == 0:
-                    print_wo_newline(SymbolIcon.HORIZ.value)
 
                 if c == len(self.cli_grid[r]) - 1:
                     print_w_flush(self.cli_grid[r][c])
                 else:
                     print_wo_newline(self.cli_grid[r][c])
+        
+        reset_line()
+        self.draw_remaining_mines()
+        reset_line()
+        print_w_flush("")
 
     def draw_remaining_mines(self):
-        ANSI_row = self.total_cli_depth + 2
         remaining_mines = self.board.mine_field.remaining_mines
         board_width = self.board.depth * 3 + 1
 
-        return print_wo_newline(f'\033[{ANSI_row};2H{"Remaining Mines: " + str(remaining_mines):^{board_width}}')
-
-    def draw_tile(self, tile):
-        cli_row, cli_column = self.state_to_cli_index(tile.state_coords)
-        symbol = self.cli_grid[cli_row][cli_column]
-        ANSI_row = tile.state_coords[0] * 3
-        ANSI_column = tile.state_coords[1] * 2 + 1 
-
-        return print_wo_newline(f'\033[{ANSI_row};{ANSI_column}H{symbol}')
+        return print_w_flush(f'\033[;3H{"Remaining Mines: " + str(remaining_mines):^{board_width}}')
 
     def first_tile_reveal(self):
         extra_safe_tiles = set()
