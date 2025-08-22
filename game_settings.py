@@ -30,7 +30,7 @@ def save_settings(settings_py):
     with open("settings.json", "w") as f:
         json.dump(settings_json, f, indent=4)
 
-def update_setting(key, value):
+def update_setting(key, value, settings):
     settings[key] = value
 
     save_settings(settings)

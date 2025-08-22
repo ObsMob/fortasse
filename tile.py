@@ -46,24 +46,37 @@ class Tile():
                 self.is_revealed = True
 
         else: 
-            if self.is_mine and self.is_flagged:
-                self.game_loss_symbol = "CORRECT"
-            elif self.is_mine and not self.is_flagged:
-                self.game_loss_symbol = "MISSED"
-            elif not self.is_mine and self.is_flagged:
-                self.game_loss_symbol = "INCORRECT"
+            if not self.is_revealed:
+                if self.is_mine and self.is_flagged:
+                    self.game_loss_symbol = "CORRECT"
+                elif self.is_mine and not self.is_flagged:
+                    self.game_loss_symbol = "MISSED"
+                elif not self.is_mine and self.is_flagged:
+                    self.game_loss_symbol = "INCORRECT"
 
     def flag_tile(self):
         mine_field = self.board.mine_field
         if self.is_revealed:
             return RevealType.ISREVEALED
 
-        elif self.is_flagged == True:
+        elif self.is_flagged == True:    
+            
             self.is_flagged = False
             mine_field.update_remaining_mines(+1)
+
+            for neighbor in self.neighbors:
+                neighbor.update_adjacent_flags()
+            
+            return RevealType.UNFLAG
+
         else:
             self.is_flagged = True
             mine_field.update_remaining_mines(-1)
+            
+            for neighbor in self.neighbors:
+                neighbor.update_adjacent_flags()
+            
+            return RevealType.ISFLAGGED
         
-        for neighbor in self.neighbors:
-            neighbor.update_adjacent_flags()
+        
+

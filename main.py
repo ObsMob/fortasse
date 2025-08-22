@@ -19,7 +19,7 @@ from config import (
 
 settings = load_settings()
 
-def handle_first_load():
+def handle_first_load(settings):
     if settings["FIRST_LOAD"] == True:
         invalid = False
         user_input = ""
@@ -30,6 +30,7 @@ def handle_first_load():
             cursor.print_w_flush(f'This is your first time loading, Resolution scale is set to {settings["RESOLUTION"].value}')
             cursor.print_w_flush("Would you like to update Resolution scale?") # row 6
             cursor.input_invalid(invalid, user_input)
+            invalid = False
 
             user_input = input("Y/N: ").strip().upper()
             
@@ -47,17 +48,17 @@ def handle_first_load():
                     res_input = input("Select option: ").strip().upper()
 
                     if res_input == "1":
-                        update_setting("RESOLUTION", Resolutions.RES_480)
+                        update_setting("RESOLUTION", Resolutions.RES_480, settings)
                     elif res_input == "2":
-                        update_setting("RESOLUTION", Resolutions.RES_720)
+                        update_setting("RESOLUTION", Resolutions.RES_720, settings)
                     elif res_input == "3":
-                        update_setting("RESOLUTION", Resolutions.RES_900)
+                        update_setting("RESOLUTION", Resolutions.RES_900, settings)
                     elif res_input == "4":
-                        update_setting("RESOLUTION", Resolutions.RES_1080)
+                        update_setting("RESOLUTION", Resolutions.RES_1080, settings)
                     elif res_input == "5":
-                        update_setting("RESOLUTION", Resolutions.RES_2K)
+                        update_setting("RESOLUTION", Resolutions.RES_2K, settings)
                     elif res_input == "6":
-                        update_setting("RESOLUTION", Resolutions.RES_4K)                     
+                        update_setting("RESOLUTION", Resolutions.RES_4K, settings)                     
                     else:
                         invalid = True
                         continue
@@ -69,7 +70,7 @@ def handle_first_load():
                 invalid = True
                 continue
         
-        update_setting("FIRST_LOAD", False)
+        update_setting("FIRST_LOAD", False, settings)
 
 def quit_game():
     sys.stdout.write("\033[2J\033[H")
@@ -97,9 +98,10 @@ def menu_load(settings):
                 invalid_locked = False
             else:
                 cursor.input_invalid(invalid, user_input)
+            invalid = False
         else:
             cursor.input_valid(valid, user_input)
-
+            valid = False
 
         match menu.options_menu:
             
@@ -147,8 +149,8 @@ def menu_load(settings):
                     elif user_input.isdigit():
                         value = int(user_input)
 
-                        if 2 <= value <= menu.width - 2:
-                            update_setting("BOARD_DEPTH", value)
+                        if 2 <= value <= (menu.width - 2) // 3:
+                            update_setting("BOARD_DEPTH", value, settings)
                         else:
                             invalid = True
                             invalid_range = True
@@ -173,7 +175,7 @@ def menu_load(settings):
                         invalid_locked = True
                         break
                     elif user_input == "S":
-                        update_setting("TILE_SHAPE", TileShape.SQ)
+                        update_setting("TILE_SHAPE", TileShape.SQ, settings)
                     elif user_input == "H":
                         invalid = True
                         invalid_locked = True
@@ -192,18 +194,24 @@ def menu_load(settings):
 
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
-                        break 
-                    elif user_input == "0":
-                        update_setting("CORNERS", False)
-                    elif user_input == "1":
+                    elif user_input == "C":
+                        #if settings["CORNERS"]:
+                            #update_setting("CORNERS", False, settings)
+                        #else:
+                            #update_setting("CORNERS", True, settings)
                         invalid = True
                         invalid_locked = True
-                        break
+                    elif user_input == "F":
+                        #if settings["AUTO_BACK"]:
+                            #update_setting("CORNERS", False, settings)
+                        #else:
+                            #update_setting("CORNERS", True, settings)
+                        invalid = True
+                        invalid_locked = True
                     else:
                         invalid = True
-                        break
-                    menu.populate_parameters()
-                    valid = True
+                    #menu.populate_parameters()
+                    #valid = True
                     break
                 continue
 
@@ -215,17 +223,17 @@ def menu_load(settings):
                         menu.options_menu = Menu.EDIT
                         break
                     if user_input == "1":
-                        update_setting("RESOLUTION", Resolutions.RES_480)
+                        update_setting("RESOLUTION", Resolutions.RES_480, settings)
                     elif user_input == "2":
-                        update_setting("RESOLUTION", Resolutions.RES_720)                       
+                        update_setting("RESOLUTION", Resolutions.RES_720, settings)                       
                     elif user_input == "3":
-                        update_setting("RESOLUTION", Resolutions.RES_900)
+                        update_setting("RESOLUTION", Resolutions.RES_900, settings)
                     elif user_input == "4":
-                        update_setting("RESOLUTION", Resolutions.RES_1080)
+                        update_setting("RESOLUTION", Resolutions.RES_1080, settings)
                     elif user_input == "5":
-                        update_setting("RESOLUTION", Resolutions.RES_2K)                       
+                        update_setting("RESOLUTION", Resolutions.RES_2K, settings)                       
                     elif user_input == "6":
-                        update_setting("RESOLUTION", Resolutions.RES_4K)                                            
+                        update_setting("RESOLUTION", Resolutions.RES_4K, settings)                                            
                     else:
                         invalid = True
                         break
@@ -252,6 +260,7 @@ def game_over(board):
         cursor.print_w_flush("BOOM! You exploded.")
         cursor.print_w_flush('Please input "R" for Restart, "M" for Menu, or "Q" for Quit')
         cursor.input_invalid(invalid, user_input)
+        invalid = False
 
         user_input = input("Select option:").strip().upper()
 
@@ -282,23 +291,25 @@ def flood_reveal(tile, board_render, visited=None):
         for neighbor in tile.neighbors:
             flood_reveal(neighbor, board_render, visited)
 
-def game_won(settings):
+def game_won(settings, board):
     render = board.board_render
     invalid = False
     user_input = ""
-    while true:
+    while True:
         sys.stdout.write("\033[2J\033[H")
         render.draw_board()
         cursor.reset_line()
-        cursor.print_w_flush(f'{SymbolIcon.TROPHY}Congratulations, You boinged all the Bombs!{SymbolIcon.TROPHY}')
+        cursor.print_w_flush(f'{SymbolIcon.TROPHY.value}Congratulations, You boinged all the Bombs!{SymbolIcon.TROPHY.value}')
         cursor.reset_line()
-        cursor.print_w_flush(f'+1 {SymbolIcon.TACO}')
-        update_setting("TACOS", settings["TACOS"] + 1)
+        cursor.print_w_flush(f'+1 {SymbolIcon.TACO.value}')
+        if not invalid:
+            update_setting("TACOS", settings["TACOS"] + 1, settings)
         cursor.reset_line()
-        cursor.print_w_flush(f'Total {SymbolIcon.TACO} accrued: {SymbolIcon.TACO * settings["TACOS"]}')
+        cursor.print_w_flush(f'Total {SymbolIcon.TACO.value} accrued: {SymbolIcon.TACO.value * settings["TACOS"]}')
         cursor.reset_line()
         cursor.print_w_flush('Input "M" for Menu, or "Q" for Quit')
         cursor.input_invalid(invalid, user_input)
+        invalid = False
 
         user_input = input("Select option:").strip().upper()
         
@@ -335,6 +346,10 @@ def game_load(board):
     invalid_flag = False
     invalid_coords = False
     invalid_state = False
+    valid = False
+    valid_flag = False
+    valid_unflag = False
+    valid_reveal = False
     select_tile_not_action = True
     user_input = ""
     pos = None
@@ -353,21 +368,37 @@ def game_load(board):
             if correct_mines == len(board.mine_field.mines):
                 return GameResult.WIN
 
-        if invalid_reveal:
-            cursor.input_invalid(invalid, pos, "reveal")
-            invalid_reveal = False
-        elif invalid_flag:
-            cursor.input_invalid(invalid, pos, "flag")
-            invalid_locked = False
-        elif invalid_coords:
-            cursor.input_invalid(invalid, pos, "coords", depth=board.depth)
-            invalid_coords = False
-        elif invalid_state:
-            cursor.input_invalid(invalid, user_input, "state")
-            invalid_state = False
+        if invalid:
+            if invalid_reveal:
+                cursor.input_invalid(invalid, pos, "reveal")
+                invalid_reveal = False
+            elif invalid_flag:
+                cursor.input_invalid(invalid, pos, "flag")
+                invalid_locked = False
+            elif invalid_coords:
+                cursor.input_invalid(invalid, pos, "coords", depth=board.depth)
+                invalid_coords = False
+            elif invalid_state:
+                cursor.input_invalid(invalid, user_input, "state")
+                invalid_state = False
+            else:
+                cursor.input_invalid(invalid, user_input)
+            invalid = False
         else:
-            cursor.input_invalid(invalid, user_input)
-            
+            if valid_flag:
+                cursor.input_valid(valid, pos, "flag")
+                valid_flag = False
+            elif valid_unflag:
+                cursor.input_valid(valid, pos, "unflag")
+                valid_unflag = False
+            elif valid_reveal:
+                cursor.input_valid(valid, pos, "reveal")
+                valid_reveal = False
+            else:
+                cursor.input_valid(valid, user_input)
+            valid = False
+
+
         if select_tile_not_action:
             cursor.print_default_board_option()
             user_input = input("Select Option: ").strip().upper()
@@ -403,10 +434,16 @@ def game_load(board):
                 if flag == RevealType.ISREVEALED:
                     invalid = True
                     invalid_reveal = True
-                else:
+                elif flag == RevealType.UNFLAG:
                     render.update_tile_symbol(tile)
+                    valid = True
+                    valid_unflag = True
+                elif flag == RevealType.ISFLAGGED:
+                    render.update_tile_symbol(tile)
+                    valid = True
+                    valid_flag = True
 
-            elif action == "R":
+            elif user_input == "R":
                 reveal = tile.reveal_tile()
 
                 if reveal == RevealType.ISREVEALED:
@@ -420,6 +457,8 @@ def game_load(board):
                 else:
                     render.update_tile_symbol(tile)
                     flood_reveal(tile, render)
+                    valid = True
+                    valid_reveal = True
                     select_tile_not_action = True
             else:
                 invalid = True
@@ -427,7 +466,7 @@ def game_load(board):
 
 def main(settings):
  
-    handle_first_load()
+    handle_first_load(settings)
     
     saved_mines = None
 
@@ -440,8 +479,9 @@ def main(settings):
                 game_result, saved_mines, board = start_game(settings, saved_mines)
 
                 if game_result == GameResult.QUIT:
+                    saved_mines = None
                     break
-                elif game_result == GameResult.WON:
+                elif game_result == GameResult.WIN:
                     post_game_action = game_won(settings, board)
                 elif game_result == GameResult.LOSS:
                     post_game_action = game_over(board)

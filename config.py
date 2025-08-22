@@ -58,7 +58,7 @@ class MenuAction(Enum):
     QUIT = auto()
 
 class GameResult(Enum):
-    WON = auto()
+    WIN = auto()
     LOSS = auto()
     QUIT = auto()
 
@@ -71,3 +71,4 @@ class RevealType(Enum):
     ISREVEALED = auto()
     ISFLAGGED = auto()
     ISMINE = auto()
+    UNFLAG = auto()

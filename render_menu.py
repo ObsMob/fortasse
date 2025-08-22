@@ -1,4 +1,4 @@
-from cursor import print_w_flush, print_wo_newline, move_cursor
+from cursor import print_w_flush, print_wo_newline
 from config import Menu, SymbolIcon, Resolutions
 
 
@@ -6,7 +6,7 @@ class RenderMenuCLI():
     def __init__(self, settings):
         self.settings = settings
         self.options_menu = Menu.MAIN
-        self.arbitrary_base_width_scale = 133
+        self.arbitrary_base_width_scale = 131
         self.width = 0
         self.greeting = "Welcome to Bomb-Boinger!"
         self.parameters_header = "Current Parameters"
@@ -20,10 +20,11 @@ class RenderMenuCLI():
 
     def populate_parameters(self):
         self.parameters =[
-            f'Board Size = {self.settings["BOARD_DEPTH"]}x{self.settings["BOARD_DEPTH"]}',  # ANSI(8, 14) r, c (including outline)
-            f'Tile Shape = {self.settings["TILE_SHAPE"].value} {self.prompt_lock}',         # ANSI(9, 14)
-            f'Corners Touch = {self.settings["CORNERS"]} {self.prompt_lock}',               # ANSI(10, 17)
-            f'Current Resolution = {self.settings["RESOLUTION"].value}'                     # ANSI(11, 22)
+            f'Board Size = {self.settings["BOARD_DEPTH"]}x{self.settings["BOARD_DEPTH"]}',
+            f'Tile Shape = {self.settings["TILE_SHAPE"].value} {self.prompt_lock}',
+            f'Corners Touch = {self.settings["CORNERS"]} {self.prompt_lock}',
+            f'"Back" on Flag/Unflag = {self.settings["AUTO_BACK"]} {self.prompt_lock}',
+            f'Current Resolution = {self.settings["RESOLUTION"].value}'                     
         ]
 
     def populate_options_sections(self):
@@ -34,15 +35,15 @@ class RenderMenuCLI():
                 '"Q" = Quit Game'                       # ANSI(18, 2)
             ],
             "edit_options": [
-                '"S" = Board Size',                     # ANSI(16, 2) r, c (including outline) 
-                '"T" = Tile Shape',                     # ANSI(17, 2)
-                '"C" = Corners',                        # ANSI(18, 2)
-                '"R" = Resolution',                     # ANSI(19, 2)
-                '"B" = Back to Main Menu'               # ANSI(20, 2)
+                '"S" = Board Size',
+                '"T" = Tile Shape',
+                '"C" = Corners and "Auto-Back',
+                '"R" = Resolution',
+                '"B" = Back to Main Menu'
             ],
             "board_prompt": [
-                f'Enter Integer: "2-{self.width - 2}"',   # ANSI(16, 2) r, c (including outline)
-                '"B" = Back to Edit Menu'                 # ANSI(17, 2)
+                f'Enter Integer: "2-{(self.width - 2) // 3}"',
+                '"B" = Back to Edit Menu'
             ],
             "tile_prompt": [
                 '"T" = Triangle - LOCKED',              # ANSI(16, 2) r, c (including outline) 
@@ -51,15 +52,15 @@ class RenderMenuCLI():
                 '"B" = Back to Edit Menu'               # ANSI(19, 2)
             ],
             "corner_prompt": [
-                '"0" = False',                          # ANSI(16, 2) r, c (including outline) 
-                '"1" = True - LOCKED',                  # ANSI(17, 2)
-                '"B" = Back to Edit Menu'               # ANSI(18, 2)
+                '"C" = Toggle Corners',
+                '"F" = Toggle "Auto-Back" on Flag/Unflag',
+                '"B" = Back to Edit Menu'
             ],
             "resolution_prompt": [
-                '"1" = 480p        "4" = 1080p',               # ANSI(16, 2) r, c (including outline) 
-                '"2" = 720p        "5" = 2K',                  # ANSI(17, 2)
-                '"3" = 900p        "6" = 4K',                  # ANSI(18, 2)
-                '"B" = Back to Edit Menu'                      # ANSI(19, 2)
+                '"1" = 480p        "4" = 1080p',
+                '"2" = 720p        "5" = 2K',
+                '"3" = 900p        "6" = 4K',
+                '"B" = Back to Edit Menu'
             ]
         }
 

@@ -8,7 +8,7 @@ from cursor import print_wo_newline, print_w_flush, reset_line
 class RenderBoardCLI():
     def __init__(self, board):
         self.board = board
-        self.total_cli_depth = board.depth * 2 + 2
+        self.total_cli_depth = board.depth * 2 + 1
         self.cli_grid = []
 
         self.populate_cli_grid()
@@ -144,7 +144,7 @@ class RenderBoardCLI():
         remaining_mines = self.board.mine_field.remaining_mines
         board_width = self.board.depth * 3 + 1
 
-        return print_w_flush(f'\033[;3H{"Remaining Mines: " + str(remaining_mines):^{board_width}}')
+        return print_w_flush(f'\033[3G{"Remaining Mines: " + str(remaining_mines):^{board_width}}')
 
     def first_tile_reveal(self):
         extra_safe_tiles = set()
@@ -168,7 +168,7 @@ class RenderBoardCLI():
                     kinda_safe_tiles.add(i)
             
             three_or_less = min(3, len(kinda_safe_tiles))
-            start_tiles_indices = random.sample(kinda_safe_tiles, three_or_less)
+            start_tiles_indices = random.sample(list(kinda_safe_tiles), three_or_less)
 
             for i in start_tiles_indices:
                 start_tile = self.board.tiles[i]
