@@ -135,11 +135,10 @@ class RenderBoardCLI():
                     print_w_flush(self.cli_grid[r][c])
                 else:
                     print_wo_newline(self.cli_grid[r][c])
-        
+
         reset_line()
         self.draw_remaining_mines()
         reset_line()
-        print_w_flush("")
 
     def draw_remaining_mines(self):
         remaining_mines = self.board.mine_field.remaining_mines
@@ -161,7 +160,6 @@ class RenderBoardCLI():
 
             start_tile.reveal_tile()
             self.update_tile_symbol(start_tile)
-            self.draw_tile(start_tile)
             return 
 
         else:
@@ -177,4 +175,3 @@ class RenderBoardCLI():
                 
                 start_tile.reveal_tile()
                 self.update_tile_symbol(start_tile)
-                self.draw_tile(start_tile)

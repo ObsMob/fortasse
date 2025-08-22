@@ -16,6 +16,7 @@ class RenderMenuCLI():
 
         self.update_width()
         self.update_width_references()
+        self.populate_parameters()
 
     def populate_parameters(self):
         self.parameters =[
@@ -84,11 +85,8 @@ class RenderMenuCLI():
 
     def draw_menu(self):
 
-        print_w_flush("\033[2J\033[H")
         self.draw_greeting_section()
-        self.populate_parameters()
         self.draw_parameter_section()
-        self.populate_options_sections()
         self.draw_option_section()
         
     def draw_greeting_section(self):

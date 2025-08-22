@@ -42,11 +42,11 @@ def print_w_flush(string):
 def print_wo_newline(string):
     print(string, end="", flush=True)
 
-def print_default_board_option(row):
+def print_default_board_option():
 
     print_w_flush('Input "row,col" to select Tile, or "Q" for Quit')
 
-def print_tile_options(row):
+def print_tile_options():
 
     print_w_flush('Input "F" for Flag/Unflag, "R" for Reveal, or "B" for Back')
 
@@ -67,7 +67,7 @@ def parse_tile_input(raw_string):
     if len(coords) != 2:
         return None
     
-    if coords[0].isdigit() == False or coords[1].isdigit() == False:
+    if not coords[0].isdigit() or not coords[1].isdigit():
         return None
 
     row = int(coords[0])
