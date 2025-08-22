@@ -39,7 +39,9 @@ def input_valid(valid, arg, usage=None):
         if usage == "unflag":
             print_w_flush(f'{TextColor.GREEN.value}Tile at {arg} has been Unflagged.{TextColor.RESET.value}')            
         if usage == "reveal":
-            print_w_flush(f'{TextColor.GREEN.value}Tile at {arg} has been Revealed.{TextColor.RESET.value}')            
+            print_w_flush(f'{TextColor.GREEN.value}Tile at {arg} has been Revealed.{TextColor.RESET.value}')
+        if usage == "move":
+            print_w_flush(f'{TextColor.GREEN.value}Tile at {arg} has been Chosen.{TextColor.RESET.value}')                         
     else:
         print_w_flush("")
 

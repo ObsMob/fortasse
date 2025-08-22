@@ -12,6 +12,7 @@ class Board():
         self.tile_quantity = self.get_max_tiles()
         self.mine_field = None # Minefield(board)
         self.board_render = None # RenderBoardCLI(board)
+        self.corners = settings["CORNERS"]
 
     def populate_tiles_data(self):
         tile_mapping = {}
@@ -76,6 +77,18 @@ class Board():
                         tile_mapping[i].add(i - 1)
                     if column != self.depth:
                         tile_mapping[i].add(i + 1)
+
+                    if self.corners:
+                        if row != 1:
+                            if column != 1:
+                                tile_mapping[i].add(i - self.depth - 1)
+                            if column != self.depth:
+                                tile_mapping[i].add(i - self.depth + 1)
+                        if row != self.depth:
+                            if column != 1:
+                                tile_mapping[i].add(i + self.depth - 1)
+                            if column != self.depth:
+                                tile_mapping[i].add(i + self.depth + 1)
 
             case TileShape.HEX:
 

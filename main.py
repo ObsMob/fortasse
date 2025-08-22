@@ -8,6 +8,7 @@ from render_menu import RenderMenuCLI
 from render_board import RenderBoardCLI
 from config import (
     TileShape,
+    TextColor,
     SymbolIcon,
     Resolutions,
     Menu,
@@ -195,23 +196,19 @@ def menu_load(settings):
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
                     elif user_input == "C":
-                        #if settings["CORNERS"]:
-                            #update_setting("CORNERS", False, settings)
-                        #else:
-                            #update_setting("CORNERS", True, settings)
-                        invalid = True
-                        invalid_locked = True
+                        if settings["CORNERS"]:
+                            update_setting("CORNERS", False, settings)
+                        else:
+                            update_setting("CORNERS", True, settings)
                     elif user_input == "F":
-                        #if settings["AUTO_BACK"]:
-                            #update_setting("CORNERS", False, settings)
-                        #else:
-                            #update_setting("CORNERS", True, settings)
-                        invalid = True
-                        invalid_locked = True
+                        if settings["AUTO_BACK"]:
+                            update_setting("AUTO_BACK", False, settings)
+                        else:
+                            update_setting("AUTO_BACK", True, settings)
                     else:
                         invalid = True
-                    #menu.populate_parameters()
-                    #valid = True
+                    menu.populate_parameters()
+                    valid = True
                     break
                 continue
 
@@ -252,12 +249,11 @@ def game_over(board):
     for mine_index in board.mine_field.mines:
         tile = board.tiles[mine_index]
         tile.reveal_tile(loss=True)
-        render.update_tile_symbol(tile)
     
     while True:
         sys.stdout.write("\033[2J\033[H")
         render.draw_board()
-        cursor.print_w_flush("BOOM! You exploded.")
+        cursor.print_w_flush(f'{TextColor.RED.value}BOOM! You exploded.{TextColor.RESET.value}')
         cursor.print_w_flush('Please input "R" for Restart, "M" for Menu, or "Q" for Quit')
         cursor.input_invalid(invalid, user_input)
         invalid = False
@@ -274,7 +270,7 @@ def game_over(board):
             invalid = True
             continue
 
-def flood_reveal(tile, board_render, visited=None):
+def flood_reveal(tile, visited=None):
     if visited is None:
         visited = set()
 
@@ -285,11 +281,10 @@ def flood_reveal(tile, board_render, visited=None):
     if not tile.is_revealed and not tile.is_flagged and not tile.is_mine:
 
         tile.reveal_tile()
-        board_render.update_tile_symbol(tile)
 
     if tile.adjacent_mines == 0:
         for neighbor in tile.neighbors:
-            flood_reveal(neighbor, board_render, visited)
+            flood_reveal(neighbor, visited)
 
 def game_won(settings, board):
     render = board.board_render
@@ -315,11 +310,26 @@ def game_won(settings, board):
         
         if user_input == "Q":
             return PostGameAction.QUIT
-        elif user_input == "M":
+        elif user_input == "M" or user_input == "B":
             return PostGameAction.MENU
         else:
             invalid = True
             continue
+
+def check_win_state(board):
+    correct_mines = 0
+    correct_reveal = 0
+
+    for tile in board.tiles.values():
+        if tile.is_mine and tile.is_flagged:
+            correct_mines += 1
+        if not tile.is_mine and tile.is_revealed:
+            correct_reveal += 1
+
+    return (
+        correct_mines == len(board.mine_field.mines) and
+        correct_reveal == len(board.tiles) - len(board.mine_field.mines)
+    )
 
 def start_game(settings, saved_mines):
     board = Board(settings)
@@ -350,6 +360,7 @@ def game_load(board):
     valid_flag = False
     valid_unflag = False
     valid_reveal = False
+    valid_move = True
     select_tile_not_action = True
     user_input = ""
     pos = None
@@ -358,15 +369,8 @@ def game_load(board):
         sys.stdout.write("\033[2J\033[H")
         render.draw_board()
 
-        if board.mine_field.remaining_mines == 0:
-            correct_mines = 0
-
-            for tile in board.tiles.values():
-                if tile.is_mine and tile.is_flagged:
-                    correct_mines += 1
-
-            if correct_mines == len(board.mine_field.mines):
-                return GameResult.WIN
+        if check_win_state(board):
+            return GameResult.WIN
 
         if invalid:
             if invalid_reveal:
@@ -394,10 +398,12 @@ def game_load(board):
             elif valid_reveal:
                 cursor.input_valid(valid, pos, "reveal")
                 valid_reveal = False
+            elif valid_move:
+                cursor.input_valid(valid, pos, "move")
+                valid_move = False
             else:
                 cursor.input_valid(valid, user_input)
             valid = False
-
 
         if select_tile_not_action:
             cursor.print_default_board_option()
@@ -409,9 +415,15 @@ def game_load(board):
             
             elif pos is not None:
                 r, c = pos
+                tile = board.get_tile_from_coords(pos)
 
-                if 1 <= r <= board.depth and 1 <= c <= board.depth:
+                if tile.is_revealed:
+                    invalid = True
+                    invalid_reveal = True
+                elif 1 <= r <= board.depth and 1 <= c <= board.depth:
                     select_tile_not_action = False
+                    valid = True
+                    valid_move = True
                 else:
                     invalid = True
                     invalid_coords = True               
@@ -423,23 +435,22 @@ def game_load(board):
         else:
             cursor.print_tile_options()
             user_input = input("Select Option: ").strip().upper()
-            
-            tile = board.get_tile_from_coords(pos)
 
             if user_input == "B":
                 select_tile_not_action = True
             elif user_input == "F":
                 flag = tile.flag_tile()
 
+                if settings["AUTO_BACK"]:
+                    select_tile_not_action = True
+
                 if flag == RevealType.ISREVEALED:
                     invalid = True
                     invalid_reveal = True
                 elif flag == RevealType.UNFLAG:
-                    render.update_tile_symbol(tile)
                     valid = True
                     valid_unflag = True
                 elif flag == RevealType.ISFLAGGED:
-                    render.update_tile_symbol(tile)
                     valid = True
                     valid_flag = True
 
@@ -455,8 +466,7 @@ def game_load(board):
                 elif reveal == RevealType.ISMINE:
                     return GameResult.LOSS
                 else:
-                    render.update_tile_symbol(tile)
-                    flood_reveal(tile, render)
+                    flood_reveal(tile)
                     valid = True
                     valid_reveal = True
                     select_tile_not_action = True

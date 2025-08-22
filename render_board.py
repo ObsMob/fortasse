@@ -128,6 +128,9 @@ class RenderBoardCLI():
 
     def draw_board(self):
 
+        for tile in self.board.tiles.values():
+            self.update_tile_symbol(tile)
+
         for r in range(len(self.cli_grid)):
             for c in range(len(self.cli_grid[r])):
 

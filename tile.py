@@ -77,6 +77,3 @@ class Tile():
                 neighbor.update_adjacent_flags()
             
             return RevealType.ISFLAGGED
-        
-        
-

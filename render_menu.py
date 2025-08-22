@@ -22,8 +22,8 @@ class RenderMenuCLI():
         self.parameters =[
             f'Board Size = {self.settings["BOARD_DEPTH"]}x{self.settings["BOARD_DEPTH"]}',
             f'Tile Shape = {self.settings["TILE_SHAPE"].value} {self.prompt_lock}',
-            f'Corners Touch = {self.settings["CORNERS"]} {self.prompt_lock}',
-            f'"Back" on Flag/Unflag = {self.settings["AUTO_BACK"]} {self.prompt_lock}',
+            f'Corners Touch = {self.settings["CORNERS"]}',
+            f'"Back" on Flag/Unflag = {self.settings["AUTO_BACK"]}',
             f'Current Resolution = {self.settings["RESOLUTION"].value}'                     
         ]
 
@@ -37,7 +37,7 @@ class RenderMenuCLI():
             "edit_options": [
                 '"S" = Board Size',
                 '"T" = Tile Shape',
-                '"C" = Corners and "Auto-Back',
+                '"C" = Corners and "Auto-Back"',
                 '"R" = Resolution',
                 '"B" = Back to Main Menu'
             ],
