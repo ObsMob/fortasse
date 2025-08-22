@@ -127,8 +127,6 @@ class RenderBoardCLI():
                 return f'{c // 2:>2}'
 
     def draw_board(self):
-        
-        print_w_flush("\033[2J\033[H")
 
         for r in range(len(self.cli_grid)):
             for c in range(len(self.cli_grid[r])):

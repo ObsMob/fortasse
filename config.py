@@ -38,9 +38,9 @@ class SymbolIcon(Enum):
     TROPHY = "🏆"
 
 class Resolutions(Enum):
-    # RES_480 = (854, 480)
-    # RES_720 = (1280, 720)
-    # RES_900 = (1600, 900)
+    RES_480 = "854x480"
+    RES_720 = "1280x720"
+    RES_900 = "1600x900"
     RES_1080 = "1920x1080"
     RES_2K = "2560x1440"
     RES_4K = "3840x2160"

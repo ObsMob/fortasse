@@ -21,49 +21,55 @@ settings = load_settings()
 
 def handle_first_load():
     if settings["FIRST_LOAD"] == True:
-        cursor.print_w_flush("\nThanks for trying Bomb-Boinger!\n") # row 3
-        cursor.print_w_flush("This is your first time loading, default Resolution scale is set to 1080p")
-        cursor.print_w_flush("Would you like to update Resolution scale?\n") # row 6
-        
+        invalid = False
+        user_input = None
+
         while True:
-            prompt_row = 7
+            sys.stdout.write("\033[2J\033[H")
+            cursor.print_w_flush("\nThanks for trying Bomb-Boinger!\n") # row 3
+            cursor.print_w_flush(f'This is your first time loading, Resolution scale is set to {settings["RESOLUTION"].value}')
+            cursor.print_w_flush("Would you like to update Resolution scale?\n") # row 6
+            if user_input is not None:
+                cursor.input_invalid(invalid, user_input)
+
             user_input = input("Y/N: ").strip().upper()
-
+            
             if user_input == "Y":
-                
-                for r in range (4, 8): # Clearing lines 4-7
-                    row = r
-                    cursor.move_cursor(row)
-                    cursor.reset_line()
+                res_input = None
 
-                cursor.move_cursor(4)
-                cursor.print_w_flush("Choose Resolution:")
-                cursor.print_w_flush('"1" = 1080')
-                cursor.print_w_flush('"2" = 2K')
-                cursor.print_w_flush('"3" = 4K\n') #row 8
-                
                 while True:
-                    prompt_row = 9
-                    res_input = input("Select option: ").strip()
+                    sys.stdout.write("\033[2J\033[H")
+                    cursor.print_w_flush("Choose Resolution:")
+                    cursor.print_w_flush('"1" = 480p    "4" = 1080p')
+                    cursor.print_w_flush('"2" = 720p    "5" = 2K')
+                    cursor.print_w_flush('"3" = 900p    "6" = 4K') #row 8
+                    if res_input is not None:
+                        cursor.input_invalid(invalid, res_input)
+
+                    res_input = input("Select option: ").strip().upper()
 
                     if res_input == "1":
-                        return
+                        update_setting("RESOLUTION", Resolutions.RES_480)
                     elif res_input == "2":
-                        update_setting("RESOLUTION", Resolutions.RES_2K)
-                        update_setting("FIRST_LOAD", False)
-                        return
+                        update_setting("RESOLUTION", Resolutions.RES_720)
                     elif res_input == "3":
-                        update_setting("RESOLUTION", Resolutions.RES_4K)
-                        update_setting("FIRST_LOAD", False)
-                        return
+                        update_setting("RESOLUTION", Resolutions.RES_900)
+                    elif res_input == "4":
+                        update_setting("RESOLUTION", Resolutions.RES_1080)
+                    elif res_input == "5":
+                        update_setting("RESOLUTION", Resolutions.RES_2K)
+                    elif res_input == "6":
+                        update_setting("RESOLUTION", Resolutions.RES_4K)                     
                     else:
-                        cursor.input_invalid(res_input, prompt_row)
-                break
+                        invalid = True
+                        continue
+                    break
 
             elif user_input == "N":
                 break
             else:
-                cursor.input_invalid(user_input, prompt_row)
+                invalid = True
+                continue
         
         update_setting("FIRST_LOAD", False)
 
@@ -73,165 +79,165 @@ def quit_game():
     sys.exit(0)
 
 def menu_load(settings):
-    cursor.move_cursor()
     menu = RenderMenuCLI(settings)
-    sys.stdout.write("\033[2J\033[H")
-    menu.draw_menu()
-    prompt_row = 25
+    valid = False
+    invalid = False
+    invalid_range = False
+    invalid_locked = False
+    user_input = None
     
     while True:
+        sys.stdout.write("\033[2J\033[H")
+        menu.draw_menu()
+
+        if user_input is not None:
+            if invalid:
+                if invalid_range:
+                    cursor.input_invalid(invalid, user_input, "range", width=menu.width)
+                    invalid_range = False
+                elif invalid_locked:
+                    cursor.input_invalid(invalid, user_input, "locked")
+                    invalid_locked = False
+                else:
+                    cursor.input_invalid(invalid, user_input)
+            else:
+                cursor.input_valid(valid, user_input)
+
+
         match menu.options_menu:
             
             case Menu.MAIN:
                 while True:
-                    cursor.move_cursor(prompt_row)
-                    cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "S":
                         return MenuAction.START
                     elif user_input == "E":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_option_section()
-                        break
                     elif user_input == "Q":
                         return MenuAction.QUIT
                     else:
-                        cursor.input_invalid(user_input, prompt_row)
+                        invalid = True
+                    break
+                continue
 
             case Menu.EDIT:
                 while True:
-                    cursor.move_cursor(prompt_row)
-                    cursor.reset_line()                    
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
                         menu.options_menu = Menu.MAIN
-                        menu.draw_option_section()
-                        break 
                     elif user_input == "S":
                         menu.options_menu = Menu.DEPTH
-                        menu.draw_option_section()
-                        break
                     elif user_input == "T":
                         menu.options_menu = Menu.TILE
-                        menu.draw_option_section()
-                        break
                     elif user_input == "C":
                         menu.options_menu = Menu.CORNERS
-                        menu.draw_option_section()
-                        break
                     elif user_input == "R":
-                        menu.options_menu = Menu.RES
-                        menu.draw_option_section()
-                        break   
+                        menu.options_menu = Menu.RES  
                     else:
-                        cursor.input_invalid(user_input, prompt_row)
+                        invalid = True
+                    break               
+                continue
 
             case Menu.DEPTH:
                 while True:
-                    cursor.move_cursor(prompt_row)
-                    cursor.reset_line()
                     user_input = input("Select Option: ").strip().upper()
                     
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_option_section()
                         break
                     elif user_input.isdigit():
                         value = int(user_input)
 
                         if 2 <= value <= menu.width - 2:
                             update_setting("BOARD_DEPTH", value)
-                            menu.populate_parameters()
-                            menu.draw_updated_parameter()
-                            cursor.input_valid(value, prompt_row)
-                            break
                         else:
-                            cursor.input_invalid(user_input, prompt_row, "range", menu.width)
+                            invalid = True
+                            invalid_range = True
+                            break
                     else:
-                        cursor.input_invalid(user_input, prompt_row)
+                        invalid = True
+                        break
+                    menu.populate_parameters()
+                    valid = True                        
+                    break
+                continue
 
             case Menu.TILE:
-                while True:
-                    cursor.move_cursor(prompt_row)
-                    cursor.reset_line()                    
+                while True:                  
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_option_section()
-                        break   
+                        break
                     elif user_input == "T":
-                        cursor.input_invalid(user_input, prompt_row, "locked")
+                        invalid = True
+                        invalid_locked = True
                         break
                     elif user_input == "S":
                         update_setting("TILE_SHAPE", TileShape.SQ)
-                        menu.populate_parameters()
-                        menu.draw_updated_parameter()
-                        cursor.input_valid(user_input, prompt_row)
-                        break
                     elif user_input == "H":
-                        cursor.input_invalid(user_input, prompt_row, "locked")
-                        break                     
+                        invalid = True
+                        invalid_locked = True
+                        break
                     else:
-                        cursor.input_invalid(user_input, prompt_row)
+                        invalid = True
+                        break
+                    menu.populate_parameters()
+                    valid = True
+                    break
+                continue
 
             case Menu.CORNERS:
-                while True:
-                    cursor.move_cursor(prompt_row)
-                    cursor.reset_line()                    
+                while True:                   
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_option_section()
-                        break   
+                        break 
                     elif user_input == "0":
                         update_setting("CORNERS", False)
-                        menu.populate_parameters()
-                        menu.draw_updated_parameter()
-                        cursor.input_valid(user_input, prompt_row)
-                        break
                     elif user_input == "1":
-                        cursor.input_invalid(user_input, prompt_row, "locked")
-                        break                     
+                        invalid = True
+                        invalid_locked = True
+                        break
                     else:
-                        cursor.input_invalid(user_input, prompt_row)
+                        invalid = True
+                        break
+                    menu.populate_parameters()
+                    valid = True
+                    break
+                continue
 
             case Menu.RES:
-                while True:
-                    cursor.move_cursor(prompt_row)
-                    cursor.reset_line()                    
+                while True:                 
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
                         menu.options_menu = Menu.EDIT
-                        menu.draw_option_section()
                         break
                     if user_input == "1":
-                        update_setting("RESOLUTION", Resolutions.RES_1080)
-                        menu.update_width()
-                        menu.update_width_references()
-                        menu.draw_updated_parameter()
-                        cursor.input_valid(user_input, prompt_row)
-                        break
+                        update_setting("RESOLUTION", Resolutions.RES_480)
                     elif user_input == "2":
-                        update_setting("RESOLUTION", Resolutions.RES_2K)
-                        menu.update_width()
-                        menu.update_width_references()                        
-                        menu.draw_updated_parameter()
-                        cursor.input_valid(user_input, prompt_row)
-                        break
+                        update_setting("RESOLUTION", Resolutions.RES_720)                       
                     elif user_input == "3":
-                        update_setting("RESOLUTION", Resolutions.RES_4K)
-                        menu.update_width()
-                        menu.update_width_references()                        
-                        menu.draw_updated_parameter()
-                        cursor.input_valid(user_input, prompt_row)                        
-                        break                     
+                        update_setting("RESOLUTION", Resolutions.RES_900)
+                    elif user_input == "4":
+                        update_setting("RESOLUTION", Resolutions.RES_1080)
+                    elif user_input == "5":
+                        update_setting("RESOLUTION", Resolutions.RES_2K)                       
+                    elif user_input == "6":
+                        update_setting("RESOLUTION", Resolutions.RES_4K)                                            
                     else:
-                        cursor.input_invalid(user_input, prompt_row)
+                        invalid = True
+                        break
+                    menu.update_width()
+                    menu.update_width_references()
+                    menu.populate_parameters()
+                    valid = True
+                    break
+                continue
 
 def game_over(board):
     render = board.board_render

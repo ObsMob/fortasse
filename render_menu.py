@@ -5,8 +5,9 @@ from config import Menu, SymbolIcon, Resolutions
 class RenderMenuCLI():
     def __init__(self, settings):
         self.settings = settings
-        self.options_menu = Menu.MAIN 
-        self.width = 58
+        self.options_menu = Menu.MAIN
+        self.arbitrary_base_width_scale = 133
+        self.width = 0
         self.greeting = "Welcome to Bomb-Boinger!"
         self.parameters_header = "Current Parameters"
         self.options_header = "Input Options"
@@ -54,27 +55,27 @@ class RenderMenuCLI():
                 '"B" = Back to Edit Menu'               # ANSI(18, 2)
             ],
             "resolution_prompt": [
-                '"1" = 1080',                           # ANSI(16, 2) r, c (including outline) 
-                '"2" = 2K',                             # ANSI(17, 2)
-                '"3" = 4K',                             # ANSI(18, 2)
-                '"B" = Back to Edit Menu'               # ANSI(19, 2)
+                '"1" = 480p        "4" = 1080p',               # ANSI(16, 2) r, c (including outline) 
+                '"2" = 720p        "5" = 2K',                  # ANSI(17, 2)
+                '"3" = 900p        "6" = 4K',                  # ANSI(18, 2)
+                '"B" = Back to Edit Menu'                      # ANSI(19, 2)
             ]
         }
 
     def update_width(self):
         match self.settings["RESOLUTION"]:
-            # case Resolutions.RES_480:
-            #     self.width = round(self.width * .48)
-            # case Resolutions.RES_720:
-            #     self.width = round(self.width * .66)
-            # case Resolutions.RES_900:
-            #     self.width = round(self.width * .83)
+            case Resolutions.RES_480:
+                self.width = round(self.arbitrary_base_width_scale * .4444)
+            case Resolutions.RES_720:
+                self.width = round(self.arbitrary_base_width_scale * .6666)
+            case Resolutions.RES_900:
+                self.width = round(self.arbitrary_base_width_scale * .8333)
             case Resolutions.RES_1080:
-                pass
+                self.width = self.arbitrary_base_width_scale
             case Resolutions.RES_2K:
-                self.width = round(self.width * 1.33)
+                self.width = round(self.arbitrary_base_width_scale * 1.3333)
             case Resolutions.RES_4K:
-                self.width = round(self.width * 2)
+                self.width = round(self.arbitrary_base_width_scale * 2)
 
     def update_width_references(self):
 
@@ -85,7 +86,9 @@ class RenderMenuCLI():
 
         print_w_flush("\033[2J\033[H")
         self.draw_greeting_section()
+        self.populate_parameters()
         self.draw_parameter_section()
+        self.populate_options_sections()
         self.draw_option_section()
         
     def draw_greeting_section(self):

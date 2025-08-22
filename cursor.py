@@ -1,28 +1,40 @@
+from config import TextColor
+
 def reset_line():
     ANSI_reset = "\033[K"
     
     print_wo_newline(ANSI_reset)
 
-def input_invalid(arg, usage=None, width=None, depth=None):
+def input_invalid(invalid, arg, usage=None, width=None, depth=None):
     
-    if usage == None:
-        print_w_flush(f'Invalid Selection "{arg}". Please try again.')
-    elif usage == "locked":
-        print_w_flush(f'Invalid Selection "{arg}. Currently Locked. Check back next update.')
-    elif usage == "state":
-        print_w_flush(f'Invalid Selection "{arg}". Usage: "1,2" for Row 1, Column 2')
-    elif usage == "coords":
-        print_w_flush(f'Invalid Selection "{arg}". Tile Indices out of range "1-{depth}"')
-    elif usage == "range":
-        print_w_flush(f'Invalid Range "{arg}". Must be integer between 2 and {width - 2}')
-    elif usage == "reveal":
-        print_w_flush(f'Invalid Action. Tile at {arg} is already revealed!')
-    elif usage == "flag":
-        print_w_flush(f'Invalid Action. Tile at {arg} is Flagged. To reveal, first unflag Tile.')
+    if invalid:
+        reset_line()
+        if usage == None:
+            print_w_flush(f'{TextColor.RED.value}Invalid Selection "{arg}". Please try again.{TextColor.RESET.value}')
+        elif usage == "locked":
+            print_w_flush(f'{TextColor.RED.value}Invalid Selection "{arg}. Currently Locked. Check back next update.{TextColor.RESET.value}')
+        elif usage == "state":
+            print_w_flush(f'{TextColor.RED.value}Invalid Selection "{arg}". Usage: "1,2" for Row 1, Column 2{TextColor.RESET.value}')
+        elif usage == "coords":
+            print_w_flush(f'{TextColor.RED.value}Invalid Selection "{arg}". Tile Indices out of range "1-{depth}"{TextColor.RESET.value}')
+        elif usage == "range":
+            print_w_flush(f'{TextColor.RED.value}Invalid Range "{arg}". Must be integer between 2 and {width - 2}{TextColor.RESET.value}')
+        elif usage == "reveal":
+            print_w_flush(f'{TextColor.RED.value}Invalid Action. Tile at {arg} is already revealed!{TextColor.RESET.value}')
+        elif usage == "flag":
+            print_w_flush(f'{TextColor.RED.value}Invalid Action. Tile at {arg} is Flagged. To reveal, first unflag Tile.{TextColor.RESET.value}')      
+        invalid = False
+    else:
+        print_w_flush("")
 
-def input_valid(arg):
-    
-    print_w_flush(f'Input {arg} accepted!')
+def input_valid(valid, arg):
+
+    if valid:
+        reset_line()
+        print_w_flush(f'{TextColor.GREEN.value}Input {arg} accepted!{TextColor.RESET.value}')
+        valid = False
+    else:
+        print_w_flush("")
 
 def print_w_flush(string):
     print(string, flush=True)
