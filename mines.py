@@ -11,8 +11,8 @@ class MineField():
         self.remaining_mines = 0
 
     def generate_mine_indices(self, tile_quantity):
-            number_of_mines = math.ceil(self.board.tile_quantity * random.uniform(.15, .40))
-            mines = random.sample(range(1, self.board.tile_quantity + 1), number_of_mines)
+            quantity_of_mines = math.ceil(self.board.tile_quantity * random.uniform(.15, .40))
+            mines = random.sample(range(1, self.board.tile_quantity + 1), quantity_of_mines)
 
             return mines
 

@@ -9,11 +9,11 @@ class Board():
         self.tiles = {}
         self.depth = settings["BOARD_DEPTH"]
         self.tile_shape = settings["TILE_SHAPE"]
+        self.corners = settings["CORNERS"]
         self.tile_quantity = self.get_max_tiles()
         self.mine_field = None # Minefield(board)
         self.board_render = None # RenderBoardCLI(board)
-        self.corners = settings["CORNERS"]
-
+        
     def populate_tiles_data(self):
         tile_mapping = {}
         for i in range(1, self.tile_quantity + 1):
@@ -65,6 +65,7 @@ class Board():
                             tile_mapping[i].add(i - (row - 1) * 2)
             
             case TileShape.SQ:
+                #adding to 'set' of neighbor's indices to tile_mapping
                 for i in range(1, self.tile_quantity + 1):  
                     row = (i - 1) // self.depth + 1
                     column = (i - 1) % self.depth + 1

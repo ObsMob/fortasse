@@ -1,9 +1,9 @@
 {
-    "FIRST_LOAD": true,
-    "BOARD_DEPTH": 3,
+    "FIRST_LOAD": false,
+    "BOARD_DEPTH": 5,
     "TILE_SHAPE": "SQ",
     "CORNERS": true,
     "AUTO_BACK": true,
     "RESOLUTION": "RES_1080",
-    "TACOS": 0
+    "TACOS": 1
 }

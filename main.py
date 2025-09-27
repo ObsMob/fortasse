@@ -6,6 +6,7 @@ from board import Board
 from mines import MineField
 from render_menu import RenderMenuCLI
 from render_board import RenderBoardCLI
+from solver import solver
 from config import (
     TileShape,
     TextColor,
@@ -290,6 +291,7 @@ def game_won(settings, board):
     render = board.board_render
     invalid = False
     user_input = ""
+    
     while True:
         sys.stdout.write("\033[2J\033[H")
         render.draw_board()
@@ -332,25 +334,42 @@ def check_win_state(board):
     )
 
 def start_game(settings, saved_mines):
-    board = Board(settings)
-    board.mine_field = MineField(board)
 
     if saved_mines == None:
-        board.mine_field.mines = board.mine_field.generate_mine_indices(board.tile_quantity)
+        while True:
+            board = Board(settings)
+
+            board.mine_field = MineField(board)
+            board.mine_field.mines = board.mine_field.generate_mine_indices(board.tile_quantity)
+            board.populate_tiles_data()
+
+            board.board_render = RenderBoardCLI(board)
+            board.board_render.first_tile_reveal()
+
+            passed = solver(board)
+            if passed:
+                break
+            else:
+                cursor.print_w_flush("Board did not pass deduction check!")
+                continue
     else:
+        board = Board(settings)
+
+        board.mine_field = MineField(board)
         board.mine_field.mines = saved_mines
+        board.populate_tiles_data()
+
+        board.board_render = RenderBoardCLI(board)
+        board.board_render.first_tile_reveal()
 
     board.mine_field.set_remaining_mines()
-    board.populate_tiles_data()
-
+    
     game_result = game_load(board)
 
     return game_result, board.mine_field.mines, board
 
 def game_load(board):
-    board.board_render = RenderBoardCLI(board)
     render = board.board_render
-    render.first_tile_reveal()
     invalid = False
     invalid_reveal = False
     invalid_flag = False
