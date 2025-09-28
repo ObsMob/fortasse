@@ -14,9 +14,13 @@ Download or Clone project and run main.py, e.g. ```"python3 main.py"```
 2. Basic UI functionality like tracking an "Esc" stroke as "Back", "Quit", or *null* input.
 3. Implement some logic that "removes" random tiles creating "holes" in the board, for game-play texture.
 4. More UI functionality in displaying some relevant game "options" during play for reference.
-5. Implement an algorithm that can parse the randomly generated board to force a board that is 100% logically deducable + Toggle option.
-6. Add colored "sections" to the game board, again for more texture.
-7. Implement WASD/Arrow navigation, with toggle.
+5. Add colored "sections" to the game board, again for more texture.
+6. Implement WASD/Arrow navigation, with toggle.
+
+## Last Update Added:
+1. Boards generated are now 100% logically deducable! (No toggle option)
+2. Option: "Restart" on fail, now reuses same initial tile reveal.
+
 
 ## Original Creator:
 @Obs
