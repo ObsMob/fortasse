@@ -1,4 +1,5 @@
-import solver_enumeration
+from solver_enumeration import global_enumerate_and_deduce
+
 
 def zero_adjacent(tile):
     to_reveal = set()
@@ -32,9 +33,9 @@ def adjacent_eq_unrevealed(tile):
     to_flag = set()
     to_clear = set()
 
-    if tile.adjacent_mines == sum(1 for n in tile.neighbors if not n.is_revealed):
+    if tile.adjacent_mines - tile.adjacent_flags == sum(1 for n in tile.neighbors if not n.is_revealed and not n.is_flagged):
         for neighbor in tile.neighbors:
-            if not neighbor.is_revealed:
+            if not neighbor.is_revealed and not neighbor.is_flagged:
 
                 to_flag.add(neighbor)
 
@@ -46,12 +47,12 @@ def subset_pair_compare(revealed_working):
     to_reveal = set()
     to_flag = set()
 
-    for i, tile_a in enumerate(revealed_working):
+    for tile_a in revealed_working:
         unrevealed_a = set(n for n in tile_a.neighbors if not n.is_revealed and not n.is_flagged)
         mines_left_a = tile_a.adjacent_mines - tile_a.adjacent_flags
         
-        for j, tile_b in enumerate(revealed_working):
-            if i == j:
+        for tile_b in revealed_working:
+            if tile_a == tile_b:
                 continue
 
             unrevealed_b = set(n for n in tile_b.neighbors if not n.is_revealed and not n.is_flagged)
@@ -61,7 +62,7 @@ def subset_pair_compare(revealed_working):
             non_overlap_a = unrevealed_a - overlap
             non_overlap_b = unrevealed_b - overlap
 
-            if unrevealed_a < unrevealed_b and mines_left_a <= mines_left_b:
+            if unrevealed_a <= unrevealed_b and mines_left_a <= mines_left_b:
                 non_overlap_mines_b = mines_left_b - mines_left_a
                 
                 if non_overlap_mines_b == len(non_overlap_b):
@@ -152,7 +153,7 @@ def solver(board):
 
         else:
 
-            to_reveal, to_flag = solver_enumeration.global_enumerate_and_deduce(revealed_working)
+            to_reveal, to_flag = global_enumerate_and_deduce(revealed_working)
 
             if to_reveal or to_flag:
                 

@@ -163,7 +163,7 @@ class RenderBoardCLI():
 
             start_tile.reveal_tile()
             self.update_tile_symbol(start_tile)
-            return 
+            return [start_tile_index]
 
         else:
             for i, tile in self.board.tiles.items():
@@ -178,3 +178,4 @@ class RenderBoardCLI():
                 
                 start_tile.reveal_tile()
                 self.update_tile_symbol(start_tile)
+            return start_tiles_indices

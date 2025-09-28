@@ -1,4 +1,5 @@
 import sys
+import copy
 
 import cursor
 from game_settings import load_settings, update_setting, save_settings
@@ -333,40 +334,39 @@ def check_win_state(board):
         correct_reveal == len(board.tiles) - len(board.mine_field.mines)
     )
 
-def start_game(settings, saved_mines):
-
-    if saved_mines == None:
-        while True:
-            board = Board(settings)
-
-            board.mine_field = MineField(board)
-            board.mine_field.mines = board.mine_field.generate_mine_indices(board.tile_quantity)
-            board.populate_tiles_data()
-
-            board.board_render = RenderBoardCLI(board)
-            board.board_render.first_tile_reveal()
-
-            passed = solver(board)
-            if passed:
-                break
-            else:
-                cursor.print_w_flush("Board did not pass deduction check!")
-                continue
-    else:
+def start_game(settings, saved_mines, first_reveal_indices):
+    
+    while True:
         board = Board(settings)
-
         board.mine_field = MineField(board)
-        board.mine_field.mines = saved_mines
-        board.populate_tiles_data()
 
+        if saved_mines != None:
+            board.mine_field.mines = saved_mines
+        else:
+            board.mine_field.mines = board.mine_field.generate_mine_indices(board.tile_quantity)
+
+        board.populate_tiles_data()
         board.board_render = RenderBoardCLI(board)
-        board.board_render.first_tile_reveal()
+
+        if saved_mines != None:
+            for i in first_reveal_indices:
+                board.tiles[i].reveal_tile()
+        else:
+            first_reveal_indices = board.board_render.first_tile_reveal()
+
+        test_board = copy.deepcopy(board)
+        passed = solver(test_board)
+        if passed:
+            break
+        else:
+            cursor.print_w_flush("Board did not pass deduction check!")
+            continue
 
     board.mine_field.set_remaining_mines()
     
     game_result = game_load(board)
 
-    return game_result, board.mine_field.mines, board
+    return game_result, board.mine_field.mines, first_reveal_indices, board
 
 def game_load(board):
     render = board.board_render
@@ -379,7 +379,7 @@ def game_load(board):
     valid_flag = False
     valid_unflag = False
     valid_reveal = False
-    valid_move = True
+    valid_move = False
     select_tile_not_action = True
     user_input = ""
     pos = None
@@ -498,6 +498,7 @@ def main(settings):
     handle_first_load(settings)
     
     saved_mines = None
+    first_reveal_indices = None
 
     while True:
         menu_action = menu_load(settings)
@@ -505,10 +506,11 @@ def main(settings):
         if menu_action == MenuAction.START:
 
             while True:
-                game_result, saved_mines, board = start_game(settings, saved_mines)
+                game_result, saved_mines, first_reveal_indices, board = start_game(settings, saved_mines, first_reveal_indices)
 
                 if game_result == GameResult.QUIT:
                     saved_mines = None
+                    first_reveal_indices = None
                     break
                 elif game_result == GameResult.WIN:
                     post_game_action = game_won(settings, board)
@@ -519,6 +521,7 @@ def main(settings):
                     continue
                 elif post_game_action == PostGameAction.MENU:
                     saved_mines = None
+                    first_reveal_indices = None
                     break
                 elif post_game_action == PostGameAction.QUIT:
                     save_settings(settings)
