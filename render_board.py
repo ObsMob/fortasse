@@ -1,20 +1,19 @@
 import random
 
-from board import Board
 from config import SymbolIcon, TextColor
-from cursor import print_wo_newline, print_w_flush, reset_line
+from cursor import print_wo_newline, print_w_flush
 
 
 class RenderBoardCLI():
     def __init__(self, board):
         self.board = board
-        self.total_cli_depth = board.depth * 2 + 1
+        self.total_cli_depth = board.depth * 2 + 1 # cli grid depth, does not include 'index display' row&column
         self.cli_grid = []
 
         self.populate_cli_grid()
         for tile in board.tiles.values():
             self.update_tile_symbol(tile)
-
+        
     def update_tile_symbol(self, tile):
         cli_row, cli_column = self.state_to_cli_index(tile.state_coords) 
       
@@ -24,7 +23,7 @@ class RenderBoardCLI():
         r, c  = coords
         return (r * 2, c * 2)
     
-    def get_tile_symbol(self, tile):        
+    def get_tile_symbol(self, tile):
         if tile.game_loss_symbol == "CORRECT":
             return SymbolIcon.CORRECT.value
         elif tile.game_loss_symbol == "MISSED":
@@ -32,6 +31,9 @@ class RenderBoardCLI():
         elif tile.game_loss_symbol == "INCORRECT":
             return SymbolIcon.INCORRECT.value
         
+        if tile.is_hole:
+            return SymbolIcon.EMPTY_D.value
+
         if not tile.is_revealed:
             if tile.is_flagged:
                 return SymbolIcon.FLAG.value
@@ -43,8 +45,7 @@ class RenderBoardCLI():
 
         digit = SymbolIcon.DIGITS.value[tile.adjacent_mines]
         color = self.get_digit_color(tile)
-        reset_color = TextColor.RESET.value
-        return f'{color}{digit}{reset_color}'
+        return f'{color}{digit}{TextColor.RESET.value}'
 
     def get_digit_color(self, tile):
         if tile.adjacent_mines == tile.adjacent_flags:
@@ -66,7 +67,7 @@ class RenderBoardCLI():
             return TextColor.RED.value
 
     def populate_cli_grid(self):
-        for r in range(self.total_cli_depth + 1):
+        for r in range(self.total_cli_depth + 1): # +1 for 'index display row&column'
             row = [] 
             
             for c in range(self.total_cli_depth + 1):
@@ -102,7 +103,7 @@ class RenderBoardCLI():
             if c % 2 == 1:
                 return SymbolIcon.VERT.value
             else:
-                return SymbolIcon.EMPTY.value
+                return SymbolIcon.EMPTY_D.value
 
         else:
             if c == 1:
@@ -117,7 +118,7 @@ class RenderBoardCLI():
     def cli_outline_indices(self, r, c):
         if c == 0:
             if r == 0 or r % 2 == 1:
-                return SymbolIcon.EMPTY.value
+                return SymbolIcon.EMPTY_D.value
             else:
                 return f'{r // 2:>2}'
         else:
@@ -139,43 +140,10 @@ class RenderBoardCLI():
                 else:
                     print_wo_newline(self.cli_grid[r][c])
 
-        reset_line()
         self.draw_remaining_mines()
-        reset_line()
 
     def draw_remaining_mines(self):
         remaining_mines = self.board.mine_field.remaining_mines
         board_width = self.board.depth * 3 + 1
 
         return print_w_flush(f'\033[3G{"Remaining Mines: " + str(remaining_mines):^{board_width}}')
-
-    def first_tile_reveal(self):
-        extra_safe_tiles = set()
-        kinda_safe_tiles = set()
-
-        for i, tile in self.board.tiles.items():
-            if tile.adjacent_mines == 0 and not tile.is_mine:
-                extra_safe_tiles.add(i)
-
-        if extra_safe_tiles: 
-            start_tile_index = random.choice(list(extra_safe_tiles))
-            start_tile = self.board.tiles[start_tile_index]
-
-            start_tile.reveal_tile()
-            self.update_tile_symbol(start_tile)
-            return [start_tile_index]
-
-        else:
-            for i, tile in self.board.tiles.items():
-                if tile.adjacent_mines <= 2 and not tile.is_mine:
-                    kinda_safe_tiles.add(i)
-            
-            three_or_less = min(3, len(kinda_safe_tiles))
-            start_tiles_indices = random.sample(list(kinda_safe_tiles), three_or_less)
-
-            for i in start_tiles_indices:
-                start_tile = self.board.tiles[i]
-                
-                start_tile.reveal_tile()
-                self.update_tile_symbol(start_tile)
-            return start_tiles_indices

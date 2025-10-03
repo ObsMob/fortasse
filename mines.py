@@ -1,22 +1,16 @@
-import random
-import math
-
-from board import Board
+from config import RNGIndices
 
 
 class MineField():
     def __init__(self, board):
         self.board = board
-        self.mines = None # This is a list
+        self.mines = []
         self.remaining_mines = 0
 
-    def generate_mine_indices(self, tile_quantity):
-            quantity_of_mines = math.ceil(self.board.tile_quantity * random.uniform(.15, .40))
-            mines = random.sample(range(1, self.board.tile_quantity + 1), quantity_of_mines)
+    def generate_mine_indices(self):  
+        self.mines = self.board.rng_generate_indices(RNGIndices.MINES)
 
-            return mines
-
-    def set_tile_mine_attr(self):
+    def set_mine_attr(self):
         for index_of_mine in self.mines:
             self.board.tiles[index_of_mine].is_mine = True
 
@@ -25,3 +19,4 @@ class MineField():
 
     def set_remaining_mines(self):
         self.remaining_mines = len(self.mines)
+

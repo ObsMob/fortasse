@@ -4,14 +4,16 @@ from config import Menu, SymbolIcon, Resolutions
 
 class RenderMenuCLI():
     def __init__(self, settings):
-        self.settings = settings
-        self.options_menu = Menu.MAIN
-        self.arbitrary_base_width_scale = 131
-        self.width = 0
         self.greeting = "Welcome to Bomb-Boinger!"
         self.parameters_header = "Current Parameters"
         self.options_header = "Input Options"
         self.prompt_lock = '(Currently locked. Soon™)'
+        self.width = 0
+        self.arbitrary_base_width_scale = 131
+        self.settings = settings
+        self.options_menu = Menu.MAIN
+
+
         self.max_options_rows = None
 
         self.update_width()
@@ -23,6 +25,8 @@ class RenderMenuCLI():
             f'Board Size = {self.settings["BOARD_DEPTH"]}x{self.settings["BOARD_DEPTH"]}',
             f'Tile Shape = {self.settings["TILE_SHAPE"].value} {self.prompt_lock}',
             f'Corners Touch = {self.settings["CORNERS"]}',
+            f'Generate Holes = {self.settings["HOLES"]}',
+            f'Coloured Sections = {self.settings["COLOURS"]} {self.prompt_lock}',
             f'"Back" on Flag/Unflag = {self.settings["AUTO_BACK"]}',
             f'Current Resolution = {self.settings["RESOLUTION"].value}'                     
         ]
@@ -37,7 +41,7 @@ class RenderMenuCLI():
             "edit_options": [
                 '"S" = Board Size',
                 '"T" = Tile Shape',
-                '"C" = Corners and "Auto-Back"',
+                '"O" = Game Options',
                 '"R" = Resolution',
                 '"B" = Back to Main Menu'
             ],
@@ -51,9 +55,11 @@ class RenderMenuCLI():
                 '"H" = Hexagon - LOCKED',               # ANSI(18, 2)
                 '"B" = Back to Edit Menu'               # ANSI(19, 2)
             ],
-            "corner_prompt": [
-                '"C" = Toggle Corners',
-                '"F" = Toggle "Auto-Back" on Flag/Unflag',
+            "settings_prompt": [
+                '"T" = Corners Touch',
+                '"H" = Generate Holes (random empty tiles)',
+                '"C" = Coloured Tile Sections - LOCKED',
+                '"F" = "Auto-Back" on Flag/Unflag',
                 '"B" = Back to Edit Menu'
             ],
             "resolution_prompt": [
@@ -98,7 +104,6 @@ class RenderMenuCLI():
         self.header_row(header_text)
         self.empty_row()
         self.divider_row()
-        # Row 5
 
     def draw_parameter_section(self):
         header_text = self.parameters_header
@@ -111,7 +116,6 @@ class RenderMenuCLI():
 
         self.empty_row()
         self.divider_row()
-        # Row 13
 
     def draw_option_section(self):
         header_text = self.options_header
@@ -125,8 +129,8 @@ class RenderMenuCLI():
                 option_section = "board_prompt"
             case Menu.TILE:
                 option_section = "tile_prompt"
-            case Menu.CORNERS:
-                option_section = "corner_prompt"
+            case Menu.SETTINGS:
+                option_section = "settings_prompt"
             case Menu.RES:
                 option_section = "resolution_prompt"
 
@@ -134,7 +138,7 @@ class RenderMenuCLI():
         
         self.header_row(header_text)
         self.empty_row()
-        # Row 15
+
         for option_text in self.options_sections[option_section]:
             self.option_row(option_text)
 
@@ -143,7 +147,6 @@ class RenderMenuCLI():
 
         self.empty_row()
         self.bot_row()
-        # Row 22
 
     def top_row(self):
         return print_w_flush(f'{SymbolIcon.TOPLEFT.value}{SymbolIcon.HORIZ.value * self.width}{SymbolIcon.TOPRIGHT.value}')

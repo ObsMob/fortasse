@@ -1,4 +1,4 @@
-from solver_enumeration import global_enumerate_and_deduce
+from solver_sat import global_sat_deduction
 
 
 def zero_adjacent(tile):
@@ -107,6 +107,17 @@ def solver_clear_tiles(to_clear, revealed_working, cleared):
         revealed_working.remove(tile)
         cleared.add(tile)
 
+def solver_win_state(cleared, flagged, board):
+    must_clear = board.tile_quantity
+
+    if board.holes:
+        must_clear -= board.holes_quant
+
+    return (
+        len(cleared) + len(flagged) == must_clear and
+        len(flagged) == board.mines_quant
+    )
+
 def solver(board):
     revealed_working = set()
     flagged = set()
@@ -144,16 +155,11 @@ def solver(board):
             solver_flag_tiles(to_flag, flagged)
             solver_reveal_tiles(to_reveal, revealed_working)
             continue
-
-        if (
-            len(cleared) + len(flagged) == board.tile_quantity and
-            len(flagged) == len(board.mine_field.mines)
-        ):
+        
+        if solver_win_state(cleared, flagged, board):
             return True
-
         else:
-
-            to_reveal, to_flag = global_enumerate_and_deduce(revealed_working)
+            to_reveal, to_flag = global_sat_deduction(revealed_working)
 
             if to_reveal or to_flag:
                 
@@ -162,4 +168,3 @@ def solver(board):
                 continue
             else:
                 return False
-        

@@ -1,33 +1,48 @@
+import random
 import math
 
-from config import TileShape
+from config import TileShape, RNGIndices
 from tile import Tile
+from mines import MineField
+from holes import HoleField
 
 
 class Board():
     def __init__(self, settings):
-        self.tiles = {}
         self.depth = settings["BOARD_DEPTH"]
         self.tile_shape = settings["TILE_SHAPE"]
         self.corners = settings["CORNERS"]
+        self.holes = settings["HOLES"]
+        self.colours = settings["COLOURS"]
+        self.tiles = {}
         self.tile_quantity = self.get_max_tiles()
-        self.mine_field = None # Minefield(board)
+        self.first_reveals = []
+        self.saved_board_data = [] # [mines_list, holes_list, first_reveal_list]
+        self.mine_field = MineField(self)
+        self.hole_field = HoleField(self)
         self.board_render = None # RenderBoardCLI(board)
         
     def populate_tiles_data(self):
         tile_mapping = {}
+
         for i in range(1, self.tile_quantity + 1):
-            self.tiles[i] = Tile(i, self)
+            self.tiles[i] = Tile(self)
             tile_mapping[i] = set()
 
         self.assign_state_coords()
         self.add_edges(tile_mapping)
         self.map_tile_neighbors(tile_mapping)
-        self.mine_field.set_tile_mine_attr()
+        self.mine_field.set_mine_attr()
 
         for tile in self.tiles.values():
             tile.update_adjacent_mines()
-        
+
+        if self.holes:
+            self.hole_field.set_hole_attr()
+
+            for tile in self.tiles.values():
+                tile.neighbors = [n for n in tile.neighbors if not n.is_hole]
+
     def get_max_tiles(self):
         match self.tile_shape:
             
@@ -39,7 +54,7 @@ class Board():
                 return 3 * self.depth * (self.depth - 1) + 1
 
     def add_edges(self, tile_mapping):
-
+        # Adds to tile_mapping set of neighbor's indices
         match self.tile_shape:
 
             case TileShape.TRI:
@@ -65,11 +80,12 @@ class Board():
                             tile_mapping[i].add(i - (row - 1) * 2)
             
             case TileShape.SQ:
-                #adding to 'set' of neighbor's indices to tile_mapping
+                
                 for i in range(1, self.tile_quantity + 1):  
                     row = (i - 1) // self.depth + 1
                     column = (i - 1) % self.depth + 1
 
+                    # Cardinal
                     if row != 1:
                         tile_mapping[i].add(i - self.depth)
                     if row != self.depth:
@@ -79,6 +95,7 @@ class Board():
                     if column != self.depth:
                         tile_mapping[i].add(i + 1)
 
+                    # Diagonal
                     if self.corners:
                         if row != 1:
                             if column != 1:
@@ -92,7 +109,7 @@ class Board():
                                 tile_mapping[i].add(i + self.depth + 1)
 
             case TileShape.HEX:
-
+                # Create axial coordinates from center tile, map to index and vice versa
                 def hex_axial_mapping():
                     index_to_axial = {}
                     axial_to_index = {}
@@ -167,4 +184,60 @@ class Board():
         for tile in self.tiles.values():
             if tile.state_coords == (row, col):
                 return tile
-        
+
+    def rng_generate_indices(self, index_type):
+        quant = self.tile_quantity
+        free_indices = []
+
+        match index_type:
+
+            case RNGIndices.MINES:
+
+                quant_of_mines = math.ceil(quant * random.uniform(.15, .40))
+                mines = random.sample(range(1, quant + 1), quant_of_mines)
+                return mines
+
+            case RNGIndices.HOLES:
+                
+                for i in range (1, quant + 1):
+                    free_indices.append(i)
+                    
+                for mine_index in self.mine_field.mines:
+                    free_indices.remove(mine_index)
+                
+                quant_of_holes = math.ceil(quant * random.uniform(.08, .16))
+                holes = random.sample(free_indices, quant_of_holes)
+                return holes
+
+            case RNGIndices.COLORS:
+                return
+
+    def populate_first_reveals(self):
+        extra_safe_tiles = set()
+        kinda_safe_tiles = set()
+
+        for i, tile in self.tiles.items():
+            if tile.adjacent_mines == 0 and not tile.is_mine and not tile.is_hole:
+                extra_safe_tiles.add(i)
+
+        if extra_safe_tiles: 
+            start_tile_index = random.choice(list(extra_safe_tiles))
+            start_tile = self.tiles[start_tile_index]
+
+            self.first_reveals = [start_tile_index]
+
+        else:
+            for i, tile in self.tiles.items():
+                if tile.adjacent_mines <= 2 and not tile.is_mine and not tile.is_hole:
+                    kinda_safe_tiles.add(i)
+            
+            three_or_less = min(3, len(kinda_safe_tiles))
+            start_tiles_indices = random.sample(list(kinda_safe_tiles), three_or_less)
+
+            self.first_reveals = start_tiles_indices
+
+    def populate_save_data(self):
+
+        self.saved_board_data.append(self.mine_field.mines)
+        self.saved_board_data.append(self.hole_field.holes)
+        self.saved_board_data.append(self.first_reveals)

@@ -21,6 +21,8 @@ class SymbolIcon(Enum):
     INCORRECT = "❌"
     FLAG = "🚩"
     UNKNOWN= "⬜"
+    SELECTED = "🧜‍♂️"
+    COLOURS = "🟪🟥🟧🟨🟩🟦🟫❓🔳"
     DIGITS = FULLWIDTH_DIGITS
     TOPLEFT = "╔"
     TOPRIGHT = "╗"
@@ -33,7 +35,8 @@ class SymbolIcon(Enum):
     HORIZ = "═"
     VERT = "║"
     TEE = "╬"
-    EMPTY = "  "
+    EMPTY_D = "  "
+    EMPTY_S = " "
     TACO = "🌮"
     TROPHY = "🏆"
 
@@ -50,7 +53,7 @@ class Menu(Enum):
     EDIT = "Edit Menu"
     DEPTH = "Depth Menu"
     TILE =  "Tile Menu"
-    CORNERS = "Corner Menu"
+    SETTINGS = "Game Settings Menu"
     RES = "Resolution Menu"
 
 class MenuAction(Enum):
@@ -72,3 +75,8 @@ class RevealType(Enum):
     ISFLAGGED = auto()
     ISMINE = auto()
     UNFLAG = auto()
+
+class RNGIndices(Enum):
+    MINES = auto()
+    HOLES = auto()
+    COLORS = auto()

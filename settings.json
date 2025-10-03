@@ -1,8 +1,14 @@
 {
     "FIRST_LOAD": true,
+<<<<<<< HEAD
     "BOARD_DEPTH": 5,
+=======
+    "BOARD_DEPTH": 10,
+>>>>>>> 9e58b0d (Too many refactors to remember. Must commit more frequently*. Pulled functions out to different modules. Removed enumeration solver(was freezing at large size, and deepcopy was erroring out), replaced with SAT Solver and Pysat. Added requirements.txt. Created separate paired down classes for solver, removed deepcopy. Implemented holes logic and rendering.)
     "TILE_SHAPE": "SQ",
     "CORNERS": true,
+    "HOLES": false,
+    "COLOURS": false,
     "AUTO_BACK": true,
     "RESOLUTION": "RES_1080",
     "TACOS": 0

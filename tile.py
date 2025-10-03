@@ -2,15 +2,15 @@ from config import RevealType
 
 
 class Tile():
-    def __init__(self, index, board):
+    def __init__(self, board):
         self.board = board
-        self.index = index
         self.neighbors = []
+        self.is_revealed = False
         self.is_mine = False
+        self.is_flagged = False
+        self.is_hole = False
         self.adjacent_mines = 0
         self.adjacent_flags = 0
-        self.is_revealed = False
-        self.is_flagged = False
         self.state_coords = None
         self.game_loss_symbol = None
 
@@ -56,6 +56,7 @@ class Tile():
 
     def flag_tile(self):
         mine_field = self.board.mine_field
+
         if self.is_revealed:
             return RevealType.ISREVEALED
 
@@ -77,3 +78,23 @@ class Tile():
                 neighbor.update_adjacent_flags()
             
             return RevealType.ISFLAGGED
+
+    def flood_reveal(self, visited=None):
+        if visited is None:
+            visited = set()
+
+        if self in visited:
+            return
+        visited.add(self)
+
+        if (
+            not self.is_revealed and 
+            not self.is_flagged and 
+            not self.is_mine
+        ):
+
+            self.reveal_tile()
+
+        if self.adjacent_mines == 0:
+            for neighbor in self.neighbors:
+                neighbor.flood_reveal(visited)

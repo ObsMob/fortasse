@@ -1,5 +1,6 @@
 from config import TextColor
 
+
 def reset_line():
     ANSI_reset = "\033[K"
     
@@ -8,7 +9,6 @@ def reset_line():
 def input_invalid(invalid, arg, usage=None, width=None, depth=None):
     
     if invalid:
-        reset_line()
         if arg == "":
             arg = "_"
         if usage == None:
@@ -31,7 +31,6 @@ def input_invalid(invalid, arg, usage=None, width=None, depth=None):
 def input_valid(valid, arg, usage=None):
 
     if valid:
-        reset_line()
         if usage == None:
             print_w_flush(f'{TextColor.GREEN.value}Input "{arg}" accepted!{TextColor.RESET.value}')
         if usage == "flag":
@@ -46,10 +45,10 @@ def input_valid(valid, arg, usage=None):
         print_w_flush("")
 
 def print_w_flush(string):
-    print(string, flush=True)
+    print(f'\033[K{string}', flush=True)
 
 def print_wo_newline(string):
-    print(string, end="", flush=True)
+    print(f'\033[K{string}', end="", flush=True)
 
 def print_default_board_option():
 
@@ -82,4 +81,13 @@ def parse_tile_input(raw_string):
     row = int(coords[0])
     col = int(coords[1])
     return (row, col)
-  
+
+def deduction_load_wait(ellipsis):
+    if ellipsis == "....":
+        ellipsis = "."
+    else:
+        ellipsis += "."
+
+    print_wo_newline("\r")
+    print_wo_newline(f'Checking for deducible Board{ellipsis}')
+    return ellipsis
