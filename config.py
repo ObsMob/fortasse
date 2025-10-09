@@ -21,7 +21,7 @@ class SymbolIcon(Enum):
     INCORRECT = "❌"
     FLAG = "🚩"
     UNKNOWN= "⬜"
-    SELECTED = "🧜‍♂️"
+    SELECTED = "🧜"
     COLOURS = "🟪🟥🟧🟨🟩🟦🟫❓🔳"
     DIGITS = FULLWIDTH_DIGITS
     TOPLEFT = "╔"
@@ -50,14 +50,22 @@ class Resolutions(Enum):
 
 class Menu(Enum):
     MAIN = "Main Menu"
-    EDIT = "Edit Menu"
-    DEPTH = "Depth Menu"
-    TILE =  "Tile Menu"
-    SETTINGS = "Game Settings Menu"
-    RES = "Resolution Menu"
+    GAMESETT = "Game Settings Menu"
+    UISETT = "UI Settings Menu"
+    DEPTH = "Depth Setting"
+    TILE =  "Tile Setting"
+    RES = "Resolution Setting"
 
 class MenuAction(Enum):
     START = auto()
+    QUIT = auto()
+
+class KeyPress(Enum):
+    UP = (-1, 0)
+    LEFT = (0, -1)
+    DOWN = (+1, 0)
+    RIGHT = (0, +1)
+    SELECT = auto()
     QUIT = auto()
 
 class GameResult(Enum):

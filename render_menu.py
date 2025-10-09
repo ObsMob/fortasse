@@ -21,52 +21,53 @@ class RenderMenuCLI():
         self.populate_parameters()
 
     def populate_parameters(self):
-        self.parameters =[
+        self.parameters = [
             f'Board Size = {self.settings["BOARD_DEPTH"]}x{self.settings["BOARD_DEPTH"]}',
             f'Tile Shape = {self.settings["TILE_SHAPE"].value} {self.prompt_lock}',
             f'Corners Touch = {self.settings["CORNERS"]}',
             f'Generate Holes = {self.settings["HOLES"]}',
-            f'Coloured Sections = {self.settings["COLOURS"]} {self.prompt_lock}',
-            f'"Back" on Flag/Unflag = {self.settings["AUTO_BACK"]}',
-            f'Current Resolution = {self.settings["RESOLUTION"].value}'                     
+            f'Coloured Sections = {self.settings["COLOURS"]} {self.prompt_lock}',                   
         ]
 
     def populate_options_sections(self):
         self.options_sections = {
             "main_options": [
                 '"S" = Start Game',                     # ANSI(16, 2) r, c (including outline)                     
-                '"E" = Edit Parameters',                # ANSI(17, 2)
+                '"G" = Game Options',
+                '"U" = UI Options',                # ANSI(17, 2)
                 '"Q" = Quit Game'                       # ANSI(18, 2)
             ],
-            "edit_options": [
+            "game_options": [
                 '"S" = Board Size',
                 '"T" = Tile Shape',
-                '"O" = Game Options',
-                '"R" = Resolution',
+                '"C" = Corners Touch',
+                '"H" = Generate Holes (random empty tiles)',
+                '"U" = Coloured Tile Sections - LOCKED',
                 '"B" = Back to Main Menu'
             ],
             "board_prompt": [
                 f'Enter Integer: "2-{(self.width - 2) // 3}"',
-                '"B" = Back to Edit Menu'
+                '"B" = Back to Game Settings Menu'
             ],
             "tile_prompt": [
-                '"T" = Triangle - LOCKED',              # ANSI(16, 2) r, c (including outline) 
-                '"S" = Square',                         # ANSI(17, 2)
-                '"H" = Hexagon - LOCKED',               # ANSI(18, 2)
-                '"B" = Back to Edit Menu'               # ANSI(19, 2)
+                '"T" = Triangle - LOCKED',
+                '"S" = Square',
+                '"H" = Hexagon - LOCKED',
+                '"B" = Back to Game Settings Menu'
             ],
-            "settings_prompt": [
-                '"T" = Corners Touch',
-                '"H" = Generate Holes (random empty tiles)',
-                '"C" = Coloured Tile Sections - LOCKED',
-                '"F" = "Auto-Back" on Flag/Unflag',
-                '"B" = Back to Edit Menu'
+            "ui_options": [
+                f'"R" = Resolution - {self.settings["RESOLUTION"].value}',
+                f'"W" = WASD/Arrow Navigation - {self.settings["WASD"]}',  
+                f'"F" = "Auto-Back" on Flag/Unflag - {self.settings["AUTO_BACK"]}',
+                '"B" = Back to Main Menu'
             ],
             "resolution_prompt": [
+                f'Current Resolution - {self.settings["RESOLUTION"].value}',
+                "",
                 '"1" = 480p        "4" = 1080p',
                 '"2" = 720p        "5" = 2K',
                 '"3" = 900p        "6" = 4K',
-                '"B" = Back to Edit Menu'
+                '"B" = Back to UI Settings Menu'
             ]
         }
 
@@ -123,14 +124,14 @@ class RenderMenuCLI():
         match self.options_menu:
             case Menu.MAIN:
                 option_section = "main_options"
-            case Menu.EDIT:
-                option_section = "edit_options"         
+            case Menu.GAMESETT:
+                option_section = "game_options"         
             case Menu.DEPTH:
                 option_section = "board_prompt"
             case Menu.TILE:
                 option_section = "tile_prompt"
-            case Menu.SETTINGS:
-                option_section = "settings_prompt"
+            case Menu.UISETT:
+                option_section = "ui_options"
             case Menu.RES:
                 option_section = "resolution_prompt"
 

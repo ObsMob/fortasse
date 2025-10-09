@@ -1,4 +1,5 @@
 import sys
+from blessed import Terminal
 
 import cursor
 from game_settings import load_settings, update_setting, save_settings
@@ -11,12 +12,13 @@ from config import (
     Menu,
     Resolutions,
     TileShape,
+    TextColor,
 )
 
 settings = load_settings()
 
 def handle_first_load(settings):
-    if settings["FIRST_LOAD"] == True:
+    if settings["FIRST_LOAD"]:
         invalid = False
         user_input = ""
 
@@ -73,7 +75,7 @@ def quit_game():
     cursor.print_w_flush("\nThanks for Boinging those Bombs!\n")
     sys.exit(0)
 
-def menu_start(settings):
+def menu_start(settings, term):
     menu = RenderMenuCLI(settings)
     valid = False
     invalid = False
@@ -82,7 +84,7 @@ def menu_start(settings):
     user_input = ""
     
     while True:
-        sys.stdout.write("\033[2J\033[H")
+        cursor.print_w_flush(term.clear + term.home)
         menu.draw_menu()
 
         if invalid:
@@ -108,8 +110,10 @@ def menu_start(settings):
 
                     if user_input == "S":
                         return MenuAction.START
-                    elif user_input == "E":
-                        menu.options_menu = Menu.EDIT
+                    elif user_input == "G":
+                        menu.options_menu = Menu.GAMESETT
+                    elif user_input == "U":
+                        menu.options_menu = Menu.UISETT
                     elif user_input == "Q":
                         return MenuAction.QUIT
                     else:
@@ -117,7 +121,7 @@ def menu_start(settings):
                     break
                 continue
 
-            case Menu.EDIT:
+            case Menu.GAMESETT:
                 while True:
                     cursor.reset_line()
                     user_input = input("Select Option: ").strip().upper()
@@ -128,12 +132,25 @@ def menu_start(settings):
                         menu.options_menu = Menu.DEPTH
                     elif user_input == "T":
                         menu.options_menu = Menu.TILE
-                    elif user_input == "O":
-                        menu.options_menu = Menu.SETTINGS
-                    elif user_input == "R":
-                        menu.options_menu = Menu.RES  
+                    elif user_input == "C":
+                        if settings["CORNERS"]:
+                            update_setting("CORNERS", False, settings)
+                        else:
+                            update_setting("CORNERS", True, settings) 
+                    elif user_input == "H":
+                        if settings["HOLES"]:
+                            update_setting("HOLES", False, settings)
+                        else:
+                            update_setting("HOLES", True, settings)  
+                    elif user_input == "U":
+                        invalid = True
+                        invalid_locked = True
+                        break                                                                          
                     else:
                         invalid = True
+                        break
+                    menu.populate_parameters()
+                    valid = True
                     break               
                 continue
 
@@ -143,7 +160,7 @@ def menu_start(settings):
                     user_input = input("Select Option: ").strip().upper()
                     
                     if user_input == "B":
-                        menu.options_menu = Menu.EDIT
+                        menu.options_menu = Menu.GAMESETT
                         break
                     elif user_input.isdigit():
                         value = int(user_input)
@@ -168,7 +185,7 @@ def menu_start(settings):
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
-                        menu.options_menu = Menu.EDIT
+                        menu.options_menu = Menu.GAMESETT
                         break
                     elif user_input == "T":
                         invalid = True
@@ -188,27 +205,20 @@ def menu_start(settings):
                     break
                 continue
 
-            case Menu.SETTINGS:
+            case Menu.UISETT:
                 while True:
                     cursor.reset_line()              
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
-                        menu.options_menu = Menu.EDIT
-                    elif user_input == "T":
-                        if settings["CORNERS"]:
-                            update_setting("CORNERS", False, settings)
+                        menu.options_menu = Menu.MAIN
+                    elif user_input == "R":
+                        menu.options_menu = Menu.RES
+                    elif user_input == "W":
+                        if settings["WASD"]:
+                            update_setting("WASD", False, settings)
                         else:
-                            update_setting("CORNERS", True, settings)
-                    elif user_input == "H":
-                        if settings["HOLES"]:
-                            update_setting("HOLES", False, settings)
-                        else:
-                            update_setting("HOLES", True, settings)
-                    elif user_input == "C":
-                        invalid = True
-                        invalid_locked = True
-                        break
+                            update_setting("WASD", True, settings)
                     elif user_input == "F":
                         if settings["AUTO_BACK"]:
                             update_setting("AUTO_BACK", False, settings)
@@ -216,7 +226,8 @@ def menu_start(settings):
                             update_setting("AUTO_BACK", True, settings)
                     else:
                         invalid = True
-                    menu.populate_parameters()
+                        break
+                    menu.populate_options_sections()
                     valid = True
                     break
                 continue
@@ -227,7 +238,7 @@ def menu_start(settings):
                     user_input = input("Select Option: ").strip().upper()
 
                     if user_input == "B":
-                        menu.options_menu = Menu.EDIT
+                        menu.options_menu = Menu.UISETT
                         break
                     if user_input == "1":
                         update_setting("RESOLUTION", Resolutions.RES_480, settings)
@@ -246,29 +257,26 @@ def menu_start(settings):
                         break
                     menu.update_width()
                     menu.update_width_references()
-                    menu.populate_parameters()
                     valid = True
                     break
                 continue
 
 def main(settings):
- 
+    
     handle_first_load(settings)
     
-    sys.stdout.write("\033[?1049h")
-    sys.stdout.flush()
-
-    try:
+    term = Terminal()
+    with term.fullscreen():
 
         while True:
             restart = False
             board = None
-            menu_action = menu_start(settings)
+            menu_action = menu_start(settings, term)
             
             if menu_action == MenuAction.START:
 
                 while True:
-                    game_result, board = game_init(restart, settings, board)
+                    game_result, board = game_init(settings, term, board, restart)
 
                     if game_result == GameResult.QUIT:
                         break
@@ -290,11 +298,7 @@ def main(settings):
                 break
 
         save_settings(settings)
-    
-    finally:
-        sys.stdout.write("\033[?1049l")
-        sys.stdout.flush()
-        quit_game()
+    quit_game()
 
 
 if __name__ == "__main__":

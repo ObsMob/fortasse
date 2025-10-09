@@ -33,7 +33,7 @@ class RenderBoardCLI():
         
         if tile.is_hole:
             return SymbolIcon.EMPTY_D.value
-
+        
         if not tile.is_revealed:
             if tile.is_flagged:
                 return SymbolIcon.FLAG.value
@@ -128,9 +128,13 @@ class RenderBoardCLI():
                 return f'{c // 2:>2}'
 
     def draw_board(self):
-
+        
         for tile in self.board.tiles.values():
             self.update_tile_symbol(tile)
+
+        if self.board.selected != None:
+            sr, sc = self.state_to_cli_index(self.board.selected.state_coords)
+            self.cli_grid[sr][sc] = SymbolIcon.SELECTED.value
 
         for r in range(len(self.cli_grid)):
             for c in range(len(self.cli_grid[r])):

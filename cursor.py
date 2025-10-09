@@ -50,9 +50,12 @@ def print_w_flush(string):
 def print_wo_newline(string):
     print(f'\033[K{string}', end="", flush=True)
 
-def print_default_board_option():
+def print_default_board_option(settings):
 
-    print_w_flush('Input "row,col" to select Tile, or "Q" for Quit')
+    if settings["WASD"]:
+        print_w_flush('"WASD/Arrow" to navigate, "ENTER" for select, or "ESC" for Quit')
+    else:
+        print_w_flush('Input "row,col" to select Tile, or "Q" for Quit')
 
 def print_tile_options():
 

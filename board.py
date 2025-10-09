@@ -15,6 +15,7 @@ class Board():
         self.holes = settings["HOLES"]
         self.colours = settings["COLOURS"]
         self.tiles = {}
+        self.selected = None # Tile instance
         self.tile_quantity = self.get_max_tiles()
         self.first_reveals = []
         self.saved_board_data = [] # [mines_list, holes_list, first_reveal_list]
